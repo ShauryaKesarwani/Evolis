@@ -23,9 +23,9 @@ export default function FounderActionStrip({ isOwner, campaignId }: FounderActio
           <Link href={`/campaign/${campaignId}/submit-milestone`} className="flex-1 sm:flex-none text-center px-5 py-2.5 bg-[#b5e315] text-[#111111] font-bold text-sm rounded-lg hover:bg-[#a3cc13] transition-colors whitespace-nowrap">
             Submit Milestone
           </Link>
-          <button className="flex-1 sm:flex-none px-5 py-2.5 border border-[#FCFAF6]/30 text-[#FCFAF6] font-bold text-sm rounded-lg hover:bg-[#FCFAF6]/10 transition-colors whitespace-nowrap">
+          <Link href="/admin" className="flex-1 sm:flex-none text-center px-5 py-2.5 border border-[#FCFAF6]/30 text-[#FCFAF6] font-bold text-sm rounded-lg hover:bg-[#FCFAF6]/10 transition-colors whitespace-nowrap">
             Verifications
-          </button>
+          </Link>
         </div>
       </div>
     </div>

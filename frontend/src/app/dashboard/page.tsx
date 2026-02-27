@@ -141,7 +141,7 @@ function InvestmentsGrid({ investments }: { investments: Investment[] }) {
             </div>
           </div>
           
-          <Link href="/campaign" className="w-full py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
+          <Link href={`/campaign/${inv.id}`} className="w-full py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
             View Campaign
           </Link>
         </div>
@@ -211,13 +211,16 @@ function FounderCampaignsGrid({ campaigns }: { campaigns: CreatedCampaign[] }) {
           </div>
           
           <div className="mt-auto flex flex-col sm:flex-row gap-3">
-            <Link href={`/campaign`} className="flex-1 py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
+            <Link href={`/campaign/${camp.id}`} className="flex-1 py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
               Manage Project
             </Link>
             {camp.milestoneReady && (
-              <button className="flex-1 bg-[#111111] hover:bg-[#222222] text-white font-bold py-3 rounded-xl transition-colors">
+              <Link
+                href={`/campaign/${camp.id}/submit-milestone`}
+                className="flex-1 bg-[#111111] hover:bg-[#222222] text-white font-bold py-3 rounded-xl transition-colors text-center"
+              >
                 Submit Milestone
-              </button>
+              </Link>
             )}
           </div>
         </div>

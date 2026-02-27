@@ -17,6 +17,7 @@ export const escrowAbi = [
   // Some teams implement verifyMilestone() with or without an index arg.
   'function verifyMilestone() external',
   'function verifyMilestone(uint256 milestoneIndex) external',
+  'function releaseMilestoneFunds(uint256 milestoneIndex) external',
 
   // Optional reads (useful for future syncing)
   'function token() view returns (address)',

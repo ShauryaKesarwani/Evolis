@@ -9,10 +9,11 @@ import ProjectDescription from '@/components/campaign/ProjectDescription';
 import ActivityFeed from '@/components/campaign/ActivityFeed';
 import FounderActionStrip from '@/components/campaign/FounderActionStrip';
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   // Mock State Data
   const isOwner = true; // Toggle to false to see supporter view
-  const campaignId = params.id || "123";
+  const campaignId = id || "123";
 
   const mockCampaign = {
     name: "zkBNB Identity Protocol",

@@ -178,17 +178,26 @@ function VerificationControlStrip({
 
   return (
     <div className="mt-8 pt-6 border-t border-[#111111]/10 flex flex-col sm:flex-row gap-4">
-      <button 
+      <button
         onClick={onApprove}
+        className="flex-1 bg-[#111111] hover:bg-[#222222] text-white font-bold py-4 px-6 rounded-xl shadow-[4px_4px_0px_#b5e315] transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none"
+      >
+        Verify Milestone
+      </button>
+      <button
+        onClick={() => {
+          // Release logic is usually separate
+          alert("To release funds, please verify the milestone first, then use the Release trigger.");
+        }}
         className="flex-1 bg-[#b5e315] hover:bg-[#a3cc12] text-[#111111] font-bold py-4 px-6 rounded-xl shadow-[4px_4px_0px_#111111] transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none"
       >
-        Approve & Release Funds
+        Release Funds
       </button>
-      <button 
+      <button
         onClick={() => setIsRejecting(true)}
         className="px-8 py-4 border border-[#111111]/20 text-[#111111]/70 hover:text-red-500 hover:border-red-200 hover:bg-red-50 rounded-xl font-medium transition-colors"
       >
-        Reject Submission
+        Reject
       </button>
     </div>
   );

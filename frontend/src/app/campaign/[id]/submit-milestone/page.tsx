@@ -3,8 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 
-export default function SubmitMilestonePage({ params }: { params: { id: string } }) {
-  const campaignId = params.id || "123";
+export default async function SubmitMilestonePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const campaignId = id || "123";
 
   // Mock: In production, check connected wallet === campaign creator
   const isOwner = true;
