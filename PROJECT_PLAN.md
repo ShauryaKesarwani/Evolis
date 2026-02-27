@@ -1,189 +1,147 @@
-# 🚀 Milestone-Based Tokenized Crowdfunding on BNB Chain
-
-## 🧩 Problem
-
-Early-stage startups struggle to raise capital without:
-- Giving up equity
-- Dealing with heavy regulations
-- Locking supporters into illiquid commitments (e.g., Kickstarter)
-
-At the same time, Web3 fundraising often becomes:
-- Pure speculation
-- Pump-and-dump cycles
-- No accountability for project delivery
-
-There is no structured system where:
-Supporters can fund early-stage projects,
-Funds are released only when promises are verified,
-And tokens remain tradable without representing equity.
+# 🚀 PROJECT_PLAN.md
+## Milestone-Based Tokenized Crowdfunding on BNB Chain
 
 ---
 
-## 💡 Solution
+# 🎯 Vision
 
-We propose a **milestone-based tokenized crowdfunding platform on BNB Chain**.
+Build a decentralized crowdfunding protocol where:
 
-Think:
-Kickstarter × Web3 × Programmable escrow.
-
-Startups launch a **utility token** that:
-- Grants access
-- Enables governance
-- Unlocks product benefits
-- Represents ecosystem participation (NOT equity)
-
-Supporters buy tokens during a Token Generation Event (TGE).
-
-However:
-🛑 Funds are NOT immediately released to the company.
-
-Instead:
-- Funds are held in smart-contract escrow
-- Released progressively upon milestone verification
-- Verified by the platform or decentralized governance
-
-This ensures:
-✔ Accountability  
-✔ Transparency  
-✔ Reduced rug risk  
-✔ Market-driven token value  
+- Startups raise funds without equity
+- Supporters receive utility tokens
+- Funds are locked in escrow
+- Capital is released only after milestone verification
+- Refunds are available if funding goal is not met
+- Tokens gain market value via AMM (x * y = k)
 
 ---
 
-## 🏗️ Core Mechanics
+# 🧩 Problem
 
-### 1️⃣ Token Model
-- Fixed total supply
-- % allocated to public
-- % team (with lockups)
-- % treasury / ecosystem
+Traditional crowdfunding:
+- No liquidity
+- No upside
+- Funds released instantly
+
+Web3 token launches:
+- No accountability
+- Instant treasury access
+- High rug-pull risk
+
+We combine:
+Crowdfunding + Escrow + Milestones + AMM liquidity.
+
+---
+
+# 💡 Core Mechanism
+
+1. Startup creates project
+2. Sets:
+   - Token supply
+   - Funding goal
+   - Deadline
+   - Milestones
+3. Supporters buy tokens
+4. Funds stored in escrow
+5. If goal not reached → refunds enabled
+6. If goal reached → milestone phase
+7. Funds released progressively
+8. Liquidity added to AMM
+
+---
+
+# 💰 Funding Model
+
+## Fixed Price Sale
+
+Example:
+1 BNB = 1000 Tokens
+
+- Funding goal required
+- Deadline enforced
+- Contributions tracked per address
+
+---
+
+# 🔁 Refund Logic
+
+Refund allowed if:
+- Deadline passed
+- Funding goal not reached
+
+Refund returns:
+- Full contributed BNB
+
+Tokens:
+- Remain with supporter (become non-functional if project fails)
+
+---
+
+# 🧱 Escrow Model
+
+Escrow holds:
+- All contributed BNB
+
+Funds are released only when:
+- Milestone verified by backend admin
+- releaseMilestoneFunds() called
+
+Prevents:
+- Immediate treasury drain
+- Rug pull
+
+---
+
+# 📈 Token Value Logic (AMM Model)
+
+After successful funding:
+
+Project adds liquidity to PancakeSwap:
+
+x * y = k
+
+Where:
+- x = token reserve
+- y = BNB reserve
+
+Price = y / x
+
+Pure market-driven pricing.
+No predictive algorithms.
+No manipulation.
+
+---
+
+# 🔐 Regulatory Positioning
 
 Token represents:
-- Access
+- Utility
 - Participation
 - Governance
-- Status
+- Access
 
-NOT:
+Token does NOT represent:
 - Equity
-- Profit share
-- Dividends
-- Revenue claim
+- Revenue share
+- Profit claim
+- Dividend rights
 
 ---
 
-### 2️⃣ Milestone-Based Fund Release
+# 🛠 Hackathon Deliverables
 
-Instead of raising funds upfront:
-
-1. Supporters purchase tokens
-2. Funds go into on-chain escrow
-3. Startup defines milestones (MVP, Beta, Launch, etc.)
-4. Platform verifies completion
-5. Funds unlock in tranches
-
-If milestone fails:
-- Funds can pause
-- Governance can intervene
-
-This creates structured accountability.
+- Factory Contract
+- Utility Token (BEP-20)
+- Milestone Escrow
+- Refund logic
+- Funding goal enforcement
+- Deadline logic
+- Backend indexer
+- Milestone verification API
+- AMM liquidity integration plan
 
 ---
 
-### 3️⃣ Utility-Driven Value Capture
+# 🏁 Final Summary
 
-Token demand is driven by:
-
-🔹 Token-gated product access  
-🔹 Staking for premium features  
-🔹 Governance participation  
-🔹 Reputation tiers (Bronze / Silver / Gold supporter)  
-🔹 Ecosystem perks  
-
-Optional:
-- Burn mechanisms tied to product usage
-- Staking to reduce circulating supply
-
-Value comes from product growth and participation — not promises of profit.
-
----
-
-## 🌍 Why This Is Better Than Kickstarter
-
-| Kickstarter | Our Model |
-|-------------|-----------|
-| No liquidity | Tradable tokens |
-| No upside | Market-driven token value |
-| Funds released immediately | Milestone-based unlock |
-| No on-chain transparency | Fully transparent treasury |
-| Local restrictions | Borderless participation |
-
-Supporters are not just buyers.
-They are ecosystem participants.
-
----
-
-## 🔥 Why BNB Chain
-
-Using BNB Chain infrastructure allows:
-
-- Low transaction costs
-- Fast settlement
-- High retail accessibility
-- Smart contract-based escrow
-- On-chain governance
-- Scalable community participation
-
-BNB’s ecosystem makes micro-participation viable and frictionless.
-
----
-
-## 🧠 Key Insight
-
-Traditional finance says:
-Startups should be illiquid.
-
-Web3 says:
-Liquidity attracts capital.
-
-Our model balances both:
-
-✔ Early liquidity through tradable tokens  
-✔ Long-term alignment through milestone-gated funding  
-✔ No regulatory exposure via non-equity utility design  
-
----
-
-## 🛡️ Regulatory Positioning
-
-We explicitly avoid:
-- Equity representation
-- Revenue sharing
-- Profit promises
-- Yield mechanics
-
-This is positioned as:
-“Ecosystem participation tokens”
-not investment contracts.
-
-Language and structure are intentionally utility-first.
-
----
-
-## 📈 Long-Term Vision
-
-This can evolve into:
-
-- A decentralized launchpad for startups
-- On-chain private markets
-- Reputation-based funding networks
-- Programmable crowdfunding infrastructure
-
-Essentially:
-A decentralized, accountable alternative to early-stage fundraising.
-
----
-
-## 🏁 In One Line
-
-A milestone-verified, utility-token crowdfunding protocol on BNB Chain that enables startups to bootstrap community-driven growth without giving up equity — while keeping supporters liquid and protected.
+A milestone-gated, refund-protected, AMM-liquid crowdfunding protocol on BNB Chain enabling startups to bootstrap without equity while protecting supporters through programmable escrow.
