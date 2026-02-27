@@ -1,0 +1,103 @@
+# =========================
+# ENV / SECRETS (CRITICAL)
+# =========================
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.p12
+*.keystore
+*.secret
+mnemonic.txt
+secrets.json
+private.key
+PRIVATE_KEY
+wallet.json
+
+# =========================
+# NODE / JS
+# =========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# =========================
+# BUILD OUTPUTS
+# =========================
+dist/
+build/
+out/
+artifacts/
+cache/
+coverage/
+coverage.json
+
+# =========================
+# FOUNDRY
+# =========================
+lib/
+broadcast/
+cache/
+out/
+
+# =========================
+# HARDHAT
+# =========================
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# =========================
+# TRUFFLE
+# =========================
+build/contracts/
+
+# =========================
+# FRONTEND (React / Vite / Next)
+# =========================
+.next/
+.vite/
+.vercel/
+.eslintcache
+.turbo/
+.storybook/
+
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# =========================
+# LOGS
+# =========================
+logs/
+*.log
+
+# =========================
+# TEST / TEMP
+# =========================
+tmp/
+temp/
+*.tmp
+
+# =========================
+# DOCKER
+# =========================
+.dockerignore
+docker-compose.override.yml
+
+# =========================
+# MISC
+# =========================
+*.swp
+*.swo

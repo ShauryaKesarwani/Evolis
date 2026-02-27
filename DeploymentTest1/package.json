@@ -1,0 +1,36 @@
+{
+  "name": "token-factory-plu",
+  "version": "1.0.0",
+  "description": "Token deployment with Progressive Liquidity Unlock on BSC",
+  "scripts": {
+    "setup": "chmod +x setup.sh && ./setup.sh",
+    "contracts:build": "cd Contracts && forge build",
+    "contracts:test": "cd Contracts && forge test",
+    "contracts:deploy-factory": "cd Contracts && forge script script/DeployFactory.s.sol:DeployFactory --rpc-url $BSC_TESTNET_RPC --broadcast",
+    "frontend:dev": "cd Frontend && npm run dev",
+    "frontend:build": "cd Frontend && npm run build",
+    "frontend:start": "cd Frontend && npm run start",
+    "frontend:install": "cd Frontend && npm install",
+    "dev": "npm run frontend:dev",
+    "test": "npm run contracts:test"
+  },
+  "keywords": [
+    "defi",
+    "token",
+    "liquidity",
+    "unlock",
+    "bsc",
+    "pancakeswap",
+    "foundry",
+    "nextjs"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/token-factory-plu"
+  },
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
