@@ -13,6 +13,7 @@
     "@fontsource/martian-mono": "^5.2.7",
     "@studio-freight/react-lenis": "^0.0.47",
     "lenis": "^1.3.17",
+    "lucide-react": "^0.575.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"

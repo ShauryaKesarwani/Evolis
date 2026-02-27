@@ -11,11 +11,21 @@ function ScramblingText({ phrases }: { phrases: string[] }) {
   const [text, setText] = useState(phrases[0]);
 
   useEffect(() => {
-    const cycle = setInterval(() => {
-      setIndex((i) => (i + 1) % phrases.length);
-    }, 3000);
-    return () => clearInterval(cycle);
-  }, [phrases.length]);
+    let timeoutId: NodeJS.Timeout;
+
+    const tick = () => {
+      const isLastWord = index === phrases.length - 1;
+      const delay = isLastWord ? 4000 : 1500; // Wait longer on the final word
+
+      timeoutId = setTimeout(() => {
+        setIndex((i) => (i + 1) % phrases.length);
+      }, delay);
+    };
+
+    tick();
+
+    return () => clearTimeout(timeoutId);
+  }, [index, phrases.length]);
 
   useEffect(() => {
     let iteration = 0;
@@ -42,7 +52,7 @@ function ScramblingText({ phrases }: { phrases: string[] }) {
         clearInterval(scrambleInterval);
         setText(targetText);
       }
-    }, 30);
+    }, 38);
     
     return () => clearInterval(scrambleInterval);
   }, [index, phrases]);
@@ -71,13 +81,13 @@ export default function HeroSection() {
         
         {/* Left Column (Copy & CTA) */}
         <div className="max-w-2xl">
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black font-mono tracking-tighter text-[#111111] leading-[0.9] mb-8 uppercase">
-            <ScramblingText phrases={["Fund the", "Build the", "Scale the"]} /> <br />
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black font-mono tracking-tighter text-[#111111] leading-[1.1] mb-8 uppercase">
+            <ScramblingText phrases={["Fund the ", "Build the", "Scale the"]} /> <br />
             <span className="relative inline-block z-10">
               Future
               <span className="absolute bottom-2 left-0 w-full h-4 bg-accent -z-10 rotate-[-1deg]"></span>
             </span>,
-            <br />Milestone by Milestone.
+            <br />with every Milestone.
           </h1>
           
           <p className="text-xl md:text-2xl text-[#111111]/70 font-sans mb-10 leading-relaxed max-w-xl">
