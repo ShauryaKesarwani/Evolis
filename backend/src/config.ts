@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
-  PORT: z.coerce.number().int().positive().default(3000),
+  PORT: z.coerce.number().int().positive().default(3001),
   DATABASE_URL: z.string().default('file:./data/dev.sqlite'),
 
   RPC_URL: z.string().optional(),

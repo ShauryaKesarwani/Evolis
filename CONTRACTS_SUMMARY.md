@@ -6,166 +6,157 @@ Libraries: OpenZeppelin
 
 ---
 
-# 1️⃣ ProjectFactory
+# 1️⃣ TokenFactory
 
 ## Purpose
-Deploy and track projects.
+Atomically deploy Token + LiquidityController (PLU) in a single transaction.
 
-## Struct
+## Structs
 
-struct ProjectMeta {
+struct DeploymentConfig {
+    string name;
+    string symbol;
+    uint256 totalSupply;
+    uint256 initialLiquidityPercent; // Basis points (e.g., 2000 = 20%)
+    uint256 unlockDuration;
+    uint256 epochDuration;
+    address router; // PancakeSwap router address
+}
+
+struct Deployment {
     address token;
-    address escrow;
-    address creator;
-    uint256 fundingGoal;
-    uint256 deadline;
-    bool goalReached;
-    bool finalized;
+    address controller;
+    address owner;
+    uint256 timestamp;
+    uint256 totalSupply;
+    uint256 initialTokens;
+    uint256 lockedTokens;
 }
 
 ## Functions
 
-createProject(
-    string name,
-    string symbol,
-    uint256 totalSupply,
-    uint256 fundingGoal,
-    uint256 deadline,
-    Milestone[] milestones
-)
+deployTokenV2(DeploymentConfig config) → (address token, address controller)
+  - Primary entry point (deployToken V1 reverts with "Use deployTokenV2")
+  - Deploys Token, then LiquidityController
+  - Transfers locked tokens to controller
+  - Initializes controller with initial liquidity (msg.value)
 
-getProject(uint256 id)
+getUserDeployments(address user) → address[]
+getTotalDeployments() → uint256
+getDeployment(uint256 index) → Deployment
+
+## Storage
+
+Deployment[] public deployments;
+mapping(address => address[]) public userDeployments;
+mapping(address => Deployment) public deploymentInfo;
 
 ## Emits
 
-ProjectCreated(
-    uint256 projectId,
-    address token,
-    address escrow
+TokenDeployed(
+    address indexed token,
+    address indexed controller,
+    address indexed owner,
+    string name,
+    string symbol,
+    uint256 totalSupply,
+    uint256 initialLiquidity,
+    uint256 lockedTokens,
+    uint256 unlockDuration,
+    uint256 epochDuration
 )
 
 ---
 
-# 2️⃣ UtilityToken (BEP-20)
+# 2️⃣ Token (ERC-20)
 
-Standard ERC20 token.
+Simple ERC20 token.
 
 ## Features
 
 - Fixed total supply
-- Minted at deployment
-- Sale allocation sent to Escrow
-- Team allocation locked
+- Minted at deployment to a recipient (factory or controller)
+- Stores deployer address (immutable)
+
+## Constructor
+
+Token(string name, string symbol, uint256 totalSupply, address _recipient)
 
 No pricing logic inside token.
 
 ---
 
-# 3️⃣ MilestoneEscrow
+# 3️⃣ LiquidityController
+
+## Purpose
+Manages Progressive Liquidity Unlock (PLU) for a token.
+Holds tokens and gradually releases them into AMM pool over time.
 
 ## State
 
-address public token;
-address public creator;
-uint256 public fundingGoal;
-uint256 public totalRaised;
-uint256 public deadline;
-bool public goalReached;
-bool public refundsEnabled;
+address public immutable token;
+address public immutable owner;
+address public immutable deployer;
+uint256 public immutable startTime;
+uint256 public immutable unlockDuration;
+uint256 public immutable epochDuration;
+uint256 public immutable totalEpochs;
+uint256 public immutable unlockPerEpoch;
+uint256 public immutable lockedTokens;
+uint256 public lastUnlockTime;
+uint256 public epochsUnlocked;
 
-mapping(address => uint256) public contributions;
+## Functions
 
-struct Milestone {
-    string description;
-    uint256 unlockAmount;
-    bool verified;
-    bool fundsReleased;
-}
+initialize(uint256 initialTokenAmount) payable
+  - Adds initial liquidity to PancakeSwap
+  - Only owner or deployer
 
-Milestone[] public milestones;
-uint256 public currentMilestone;
+unlockEpoch() payable → uint256 tokensUnlocked
+  - Unlocks tokens for current epoch and injects into AMM
+  - Callable by anyone once epoch has passed
+  - Requires BNB (msg.value) for liquidity pairing
 
----
+manualAddLiquidity(uint256 tokenAmount) payable
+  - Owner-controlled manual liquidity addition
 
-# 🔹 Contribute()
+getUnlockableEpochs() → uint256
+getTimeUntilNextEpoch() → uint256
+getUnlockProgress() → (epochsUnlocked, totalEpochs, tokensUnlocked, tokensRemaining)
+getTokenBalance() → uint256
 
-Requirements:
-- block.timestamp < deadline
-- funding not finalized
+## Emits
 
-Logic:
-- contributions[msg.sender] += msg.value
-- totalRaised += msg.value
-- transfer tokens proportional to fixed price
-- if totalRaised >= fundingGoal:
-    goalReached = true
-
----
-
-# 🔹 Finalize()
-
-If deadline passed:
-
-If totalRaised < fundingGoal:
-    refundsEnabled = true
-
-Else:
-    goalReached = true
-
----
-
-# 🔹 Refund()
-
-Requirements:
-- refundsEnabled == true
-- contributions[msg.sender] > 0
-
-Logic:
-- return BNB
-- reset contribution
-
----
-
-# 🔹 Verify Milestone()
-
-Only backend/admin wallet.
-
-Sets:
-- milestone.verified = true
-
----
-
-# 🔹 Release Milestone Funds()
-
-Requirements:
-- milestone verified
-- not already released
-
-Logic:
-- transfer unlockAmount to creator
-- mark released
-- increment currentMilestone
+LiquidityUnlocked(uint256 indexed epoch, uint256 tokenAmount, uint256 bnbAmount, uint256 liquidity)
 
 ---
 
 # 🔹 AMM Liquidity Plan
 
-After goalReached:
+At deployment via deployTokenV2:
 
-Creator calls:
-- approve(router)
-- addLiquidity(token, BNB)
+1. initialLiquidityPercent of tokens + msg.value BNB → initial PancakeSwap pool
+2. Remaining tokens locked in LiquidityController
+3. Tokens released epoch-by-epoch via unlockEpoch()
 
-Liquidity created on PancakeSwap.
-
-Price determined by:
+Price determined by AMM:
 x * y = k
 
 ---
 
 # 🔐 Security Considerations
 
-- ReentrancyGuard on refund
-- Checks-Effects-Interactions pattern
-- Deadline enforcement
-- Locked team allocation
+- Owner/deployer gating on initialize and manualAddLiquidity
+- Epoch timing enforcement (cannot unlock before epoch passes)
+- Token transfer validation during deployment
+- Input validation on all config parameters
+
+---
+
+# ⚠️ Note: MilestoneEscrow Not Yet Implemented
+
+The milestone-gated escrow system (contribute, refund, verifyMilestone, releaseMilestoneFunds) described in the project vision has NOT been implemented as a contract yet. The current contracts implement the token deployment and PLU (Progressive Liquidity Unlock) layer only.
+
+The following contracts are still needed to complete the architecture:
+- **MilestoneEscrow**: contribution tracking, refund logic, milestone verification, fund release
+- Modifications to **TokenFactory** to also deploy an escrow alongside token + controller

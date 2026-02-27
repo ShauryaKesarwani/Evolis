@@ -4,13 +4,13 @@
 
 # 🔷 System Overview
 
-Frontend (Next.js + wagmi)
+Frontend (Next.js + Tailwind)
         ↓
-Backend (Event Indexer + Verification Service)
+Backend (Event Indexer + API)
         ↓
 Smart Contracts (BNB Chain)
         ↓
-Escrow + Token + Factory
+TokenFactory + Token + LiquidityController
 
 Backend does NOT custody funds.
 All critical logic is on-chain.
@@ -19,122 +19,117 @@ All critical logic is on-chain.
 
 # 📜 Smart Contract Layer
 
-## 1️⃣ ProjectFactory
+## 1️⃣ TokenFactory
 
 Responsible for:
-- Deploying new projects
-- Deploying token + escrow
-- Tracking project metadata
+- Deploying new token + controller pairs via `deployTokenV2()`
+- Tracking all deployments
+- Emitting `TokenDeployed` events
 
-Stores:
+Stores (per deployment):
 - token address
-- escrow address
-- creator
-- funding goal
-- deadline
+- controller address
+- owner
+- timestamp
+- totalSupply, initialTokens, lockedTokens
 
 Emits:
-- ProjectCreated event
+- TokenDeployed event
 
 ---
 
-## 2️⃣ UtilityToken (BEP-20)
+## 2️⃣ Token (ERC-20)
 
 Standard ERC20.
 
 Features:
 - Fixed supply
-- Minted at deployment
-- Sale allocation sent to Escrow
-- Optional team lock
+- Minted at deployment to recipient
+- Stores immutable deployer address
 
 No pricing logic inside token.
 
 ---
 
-## 3️⃣ MilestoneEscrow
+## 3️⃣ LiquidityController (PLU)
 
-Core contract.
+Progressive Liquidity Unlock controller.
 
 ### State Variables
 
 - token
-- creator
-- fundingGoal
-- totalRaised
-- deadline
-- goalReached
-- refundsEnabled
+- owner
+- lockedTokens
+- unlockDuration
+- epochDuration
+- totalEpochs
+- unlockPerEpoch
+- epochsUnlocked
 
-### Contribution Tracking
+### Core Functions
 
-mapping(address => uint256) contributions;
-
----
-
-# 🔹 Contribution Flow
-
-contribute():
-
-- Must be before deadline
-- Increases totalRaised
-- Transfers tokens to supporter
-- If totalRaised >= fundingGoal → goalReached = true
+initialize() — Adds initial liquidity to PancakeSwap
+unlockEpoch() — Releases tokens for current epoch into AMM
+manualAddLiquidity() — Owner-controlled manual injection
 
 ---
 
-# 🔹 Finalization Logic
+# 🔹 Deployment Flow
 
-After deadline:
+deployTokenV2():
 
-If totalRaised < fundingGoal:
-- refundsEnabled = true
-
-If totalRaised >= fundingGoal:
-- milestone phase begins
-
----
-
-# 🔹 Refund Flow
-
-refund():
-
-Requirements:
-- refundsEnabled == true
-- user contributed > 0
-
-Action:
-- Return BNB
-- Reset contribution record
+1. Validate config inputs
+2. Calculate token split (initialTokens vs lockedTokens)
+3. Deploy Token (minted to factory temporarily)
+4. Deploy LiquidityController
+5. Transfer lockedTokens to controller
+6. Initialize controller with initial liquidity (BNB + initialTokens)
+7. Store deployment record
+8. Emit TokenDeployed event
 
 ---
 
-# 🔹 Milestone Logic
+# 🔹 PLU (Progressive Liquidity Unlock)
 
-struct Milestone:
-- description
-- unlockAmount
-- verified
-- fundsReleased
+unlockEpoch():
 
-verifyMilestone():
-- Only backend admin wallet
+- Checks if epoch has passed
+- Calculates tokens to unlock
+- Pairs tokens with BNB and adds to PancakeSwap
+- Updates epoch counter
 
-releaseMilestoneFunds():
-- Transfers unlockAmount to creator
-- Moves to next milestone
+---
+
+# 📈 Token Value Architecture
+
+Initial Sale:
+- Initial liquidity added at deployment
+
+Post-Deployment:
+- Tokens progressively unlocked into PancakeSwap
+
+AMM Formula:
+x * y = k
+
+Market sets price dynamically.
 
 ---
 
 # 🌐 Backend Layer
 
+## Stack
+
+- Runtime: Bun
+- Framework: Hono
+- Database: Bun SQLite
+- Chain client: Ethers.js v6
+
 ## Responsibilities
 
-- Listen to contract events
-- Index project data
-- Provide API to frontend
-- Verify milestone completion
-- Call verifyMilestone()
+- Listen to TokenDeployed events (indexer)
+- Index deployment data into SQLite
+- Provide REST API to frontend
+- Verify milestones (when MilestoneEscrow is implemented)
 
 Backend never holds user funds.
 
@@ -151,67 +146,67 @@ Projects:
 - total_raised
 - deadline
 - status
+- created_at
+- updated_at
 
 Milestones:
 - project_id
+- milestone_index
 - description
 - unlock_amount
 - verified
 - released
+- created_at
+- updated_at
 
 Contributions:
 - project_id
 - contributor
 - amount
+- tx_hash
+- created_at
+
+Sync State:
+- key
+- value
 
 ---
 
-# 🔌 Frontend → Contract Mapping
+# 🔌 Frontend → System Mapping
 
-Create Project → Factory.createProject()
+Create Token → Factory.deployTokenV2()
 
-Contribute → Escrow.contribute()
+View Deployments → Backend API (GET /projects)
 
-Refund → Escrow.refund()
+View Details → Backend API (GET /project/:id)
 
-Verify Milestone → Backend → Escrow.verifyMilestone()
+Verify Milestone → Backend → Escrow.verifyMilestone() *(when escrow exists)*
 
-Release Funds → Escrow.releaseMilestoneFunds()
-
-Fetch Data → Backend API
-
----
-
-# 📈 Token Value Architecture
-
-Initial Sale:
-- Fixed price
-
-Post-Sale:
-- Add liquidity to PancakeSwap
-
-AMM Formula:
-x * y = k
-
-Market sets price dynamically.
+Release Funds → Escrow.releaseMilestoneFunds() *(when escrow exists)*
 
 ---
 
 # 🔐 Security Model
 
-- ReentrancyGuard on refund
-- Deadline enforcement
-- Escrow isolation
-- Backend cannot move funds
-- Only verified milestones release capital
+- Owner/deployer gating on controller functions
+- Epoch timing enforcement
+- Token transfer validation
+- Input validation on all config parameters
+
+---
+
+# ⚠️ Milestone Escrow: Not Yet Implemented
+
+The milestone-gated escrow system (contribute, refund, verifyMilestone, releaseMilestoneFunds) described in the project vision is NOT yet implemented as a contract. The current contracts cover token deployment and PLU only.
+
+Required to complete the vision:
+- MilestoneEscrow contract
+- Factory integration to deploy escrow alongside token + controller
 
 ---
 
 # 🏁 Final Architecture Statement
 
-Funds are programmatically locked.
-Capital is milestone-gated.
-Refunds are automatic.
-Liquidity is market-driven.
-
-Accountability + Liquidity + Utility.
+Tokens are atomically deployed with progressive liquidity.
+Liquidity is market-driven via AMM.
+Milestone accountability is planned but not yet on-chain.
