@@ -227,9 +227,59 @@
 ```
 
 **Key Navigation Principles:**
-- The global nav bar is persistent across all pages: Home, Create Campaign, User Dashboard, and the wallet connect control are always accessible.
-- Token purchase no longer leaves the Campaign Detail page — it resolves inline, keeping the user in context.
-- Milestone Submission and Admin Panel are both conditionally surfaced — they only appear as options when the connected wallet has the appropriate role.
 - Unauthorized direct URL access to gated pages redirects to Campaign Detail, not a blank error screen, keeping the user in a useful state.
 - After campaign creation, founders land directly on their new Campaign Detail page.
 - The Connect Wallet modal never triggers a page navigation — it always resolves in place.
+
+---
+
+## 4. AI Prompt Generation Framework (Meta-Prompt)
+
+This section acts as a master blueprint for generating development prompts for the remaining pages. **When prompted to generate a development instruction set (e.g. `PromptCampaign.md`), the AI MUST use the following strict template.**
+
+### Generation Command Definition
+To generate a prompt for a new page, the user will issue a command like:
+> "Generate a development prompt for [Page X] using the AI framework defined in UIUX.md. Output it to a markdown file."
+
+### Required Output Template
+The AI must generate a prompt following this exact structure:
+
+```markdown
+# Prompt for Developing [Page Name]
+
+**Role:** Expert Frontend Developer and UI/UX Designer
+
+**Context:**
+You are building the [Page Name] for a milestone-gated tokenized crowdfunding platform built on BNB Chain using Next.js and Tailwind CSS.
+
+**Design System & Aesthetics:**
+- **Typography:** `Martian Mono` for headings/accents. `Inter` for body copy.
+- **Palette:** Cream White (`#FCFAF6`), Dark Charcoal (`#111111`), Lime-Leaf Green (`#b5e315`).
+- **Styling Specs:** Flat design, high contrast, solid dark borders (`border-[#111111]/10`), and rounded corners.
+
+---
+
+## 🚫 Critical Architectural & Styling Constraints
+**CRITICAL: You must adhere to these rules to prevent layout and routing framework failures.**
+1. **Never use manual CSS wildcard resets.** Do NOT add rules like `* { margin: 0; padding: 0 }` to `globals.css`. Rely solely on Tailwind's Preflight engine.
+2. **Constrain Typography Scaling.** Do not oversize main headers beyond `text-7xl` to prevent overflowing `.max-w-7xl` centralized containers.
+3. **Next.js `src` Directory Discipline.** When placing the app in `src/app/`, ensure any default `app/` directory at the project root is deleted to prevent routing collisions. Ensure `tsconfig.json` paths resolve to `"@/*": ["./src/*"]`.
+
+---
+
+## 🏗️ Compartmentalized Execution Plan
+Please build the page by dividing the UI into distinct, modular React components.
+*(The generator must now break down the UI into logical parts. E.g., `Part 1: HeaderBar`, `Part 2: SubmissionForm`)*
+
+### Part 1: [Component Name] (`<ComponentName />`)
+- **Layout:** [Describe the structure, e.g., grid, flex row, margins]
+- **Elements:** [Detailed list of text fields, buttons, interactive elements]
+- **Style:** [Specific Tailwind classes utilizing the defined color palette]
+
+### Part [N]: ...
+
+---
+
+**Execution Instructions:**
+Output the React/Next.js code for this page, ensuring you break down the code into these distinct functional components before assembling them. Use Tailwind CSS utility classes to achieve the specified styling.
+```
