@@ -1,6 +1,67 @@
+"use client";
+
 import Link from "next/link";
+import { useLenis } from "@studio-freight/react-lenis";
+import { useState, useEffect } from "react";
+
+const SYMBOLS = "!@#$%^&*()_+";
+
+function ScramblingText({ phrases }: { phrases: string[] }) {
+  const [index, setIndex] = useState(0);
+  const [text, setText] = useState(phrases[0]);
+
+  useEffect(() => {
+    const cycle = setInterval(() => {
+      setIndex((i) => (i + 1) % phrases.length);
+    }, 3000);
+    return () => clearInterval(cycle);
+  }, [phrases.length]);
+
+  useEffect(() => {
+    let iteration = 0;
+    const targetText = phrases[index];
+    const maxLen = Math.max(...phrases.map((p) => p.length));
+    
+    const scrambleInterval = setInterval(() => {
+      setText((prev) => {
+        const currentLen = Math.max(prev.length, targetText.length);
+        
+        return Array.from({ length: currentLen })
+          .map((_, i) => {
+            if (i < iteration) {
+              return targetText[i] || "";
+            }
+            return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+          })
+          .join("");
+      });
+
+      iteration += 1 / 2;
+      
+      if (iteration >= maxLen) {
+        clearInterval(scrambleInterval);
+        setText(targetText);
+      }
+    }, 30);
+    
+    return () => clearInterval(scrambleInterval);
+  }, [index, phrases]);
+
+  const chWidth = Math.max(...phrases.map((p) => p.length));
+
+  return (
+    <span 
+      className="inline-block text-left whitespace-nowrap" 
+      style={{ minWidth: `${chWidth}ch` }}
+    >
+      {text}
+    </span>
+  );
+}
 
 export default function HeroSection() {
+  const lenis = useLenis();
+
   return (
     <section className="relative pt-40 pb-32 px-6 overflow-hidden bg-[#FCFAF6]">
       {/* Abstract Background Element for extra warmth */}
@@ -11,12 +72,12 @@ export default function HeroSection() {
         {/* Left Column (Copy & CTA) */}
         <div className="max-w-2xl">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-black font-mono tracking-tighter text-[#111111] leading-[0.9] mb-8 uppercase">
-            Fund the <br />
+            <ScramblingText phrases={["Fund the", "Build the", "Scale the"]} /> <br />
             <span className="relative inline-block z-10">
-              Future,
+              Future
               <span className="absolute bottom-2 left-0 w-full h-4 bg-accent -z-10 rotate-[-1deg]"></span>
-            </span>
-            <br /> Milestone by Milestone.
+            </span>,
+            <br />Milestone by Milestone.
           </h1>
           
           <p className="text-xl md:text-2xl text-[#111111]/70 font-sans mb-10 leading-relaxed max-w-xl">
@@ -25,15 +86,19 @@ export default function HeroSection() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 font-mono">
-            <Link 
+            <a 
               href="#explore"
-              className="px-8 py-4 rounded-full bg-accent text-[#111111] font-bold text-center border-2 border-[#111111] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#111111] transition-all duration-200"
+              onClick={(e) => {
+                e.preventDefault();
+                lenis?.scrollTo('#explore');
+              }}
+              className="px-8 py-4 rounded-full bg-accent text-[#111111] font-bold text-center border-2 border-[#111111] hover:-translate-y-1 hover:shadow-[4px_4px_0px_#111111] active:translate-y-0 active:shadow-none transition-all duration-200"
             >
               Explore Campaigns ↗
-            </Link>
+            </a>
             <Link 
               href="/create"
-              className="px-8 py-4 rounded-full bg-transparent text-[#111111] font-bold text-center border-2 border-[#111111] hover:bg-[#111111] hover:text-[#FCFAF6] transition-all duration-200"
+              className="px-8 py-4 rounded-full bg-transparent text-[#111111] font-bold text-center border-2 border-[#111111] hover:bg-[#111111] hover:text-[#FCFAF6] active:translate-y-0 active:shadow-none transition-all duration-200"
             >
               Launch a Project
             </Link>

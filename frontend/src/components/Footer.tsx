@@ -18,7 +18,7 @@ export default function Footer() {
           <h4 className="font-semibold mb-6 font-mono text-sm uppercase tracking-wider">Platform</h4>
           <ul className="space-y-4 text-sm text-[#111111]/70 font-sans">
             <li><Link href="/" className="hover:text-[#111111] transition-colors">Explore</Link></li>
-            <li><Link href="#" className="hover:text-[#111111] transition-colors">Create Campaign</Link></li>
+            <li><Link href="/create" className="hover:text-[#111111] transition-colors">Create Campaign</Link></li>
             <li><Link href="#" className="hover:text-[#111111] transition-colors">How it Works</Link></li>
           </ul>
         </div>

@@ -26,7 +26,7 @@ export default function CampaignCard({
 }: CampaignCardProps) {
   return (
     <Link href={`/project/${id}`} className="group block h-full">
-      <div className="h-full flex flex-col bg-white rounded-3xl border border-[#111111]/10 p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-[#111111]/30 hover:-translate-y-1 relative overflow-hidden">
+      <div className="h-full flex flex-col bg-white rounded-3xl border border-[#111111]/10 p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-[#111111]/30 hover:-translate-y-1 active:translate-y-0 active:shadow-none relative overflow-hidden">
         
         {/* Top Header Row */}
         <div className="flex justify-between items-start mb-6">
