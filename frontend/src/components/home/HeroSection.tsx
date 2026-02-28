@@ -108,7 +108,7 @@ export default function HeroSection() {
             </a>
             <Link 
               href="/create"
-              className="px-8 py-4 rounded-full bg-transparent text-[#111111] font-bold text-center border-2 border-[#111111] hover:bg-[#111111] hover:text-[#FCFAF6] active:translate-y-0 active:shadow-none transition-all duration-200"
+              className="px-8 py-4 rounded-full bg-transparent text-[#111111] font-bold text-center border-2 border-[#111111] hover:bg-[#111111] hover:!text-[#FCFAF6] active:translate-y-0 active:shadow-none transition-all duration-200"
             >
               Launch a Project
             </Link>

@@ -3,6 +3,7 @@ import { Inter, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import ShrinkingFooter from "@/components/ShrinkingFooter";
 import SmoothScroll from "@/components/SmoothScroll";
 import AnchorScrollHandler from "@/components/AnchorScrollHandler";
 import Providers from "./providers";
@@ -28,15 +29,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="bg-black">
       <body
-        className={`${inter.variable} ${martianMono.variable} antialiased selection:bg-accent selection:text-white`}
+        className={`${inter.variable} ${martianMono.variable} antialiased selection:bg-accent selection:text-white bg-black`}
       >
         <SmoothScroll>
           <Providers>
             <Navbar />
             <AnchorScrollHandler />
-            {children}
+            <ShrinkingFooter>
+                <main className="relative z-20 min-h-screen bg-black shadow-[0_-20px_60px_rgba(0,0,0,0.8)]">
+                  {children}
+                </main>
+                <div id="footer-sentinel" className="w-full" aria-hidden />
+                
+              </ShrinkingFooter> 
             <Footer />
           </Providers>
         </SmoothScroll>

@@ -74,7 +74,7 @@ export default function HowItWorksSection() {
             <button
               onClick={() => setIsCreator(false)}
               className={`flex-1 relative z-10 py-3 rounded-full font-mono font-bold text-sm transition-colors duration-300 ${
-                !isCreator ? "text-[#111111]" : "text-[#FCFAF6]/70 hover:text-[#FCFAF6]"
+                !isCreator ? "text-[#111111] " : " text-[#FCFAF6]/70 hover:text-[#FCFAF6]"
               }`}
             >
               For Backers
@@ -97,7 +97,7 @@ export default function HowItWorksSection() {
               className={`border rounded-[2rem] p-8 transition-all duration-300 flex flex-col ${
                 isCreator 
                   ? "bg-[#b5e315] border-[#b5e315] text-[#111111] hover:shadow-[8px_8px_0px_#111111] hover:-translate-y-1" 
-                  : "bg-[#1a1a1a] border-[#333] text-[#FCFAF6] hover:border-[#b5e315]"
+                  : "bg-[#4c4c4c]/70 border-[#333] text-[#FCFAF6] hover:border-[#b5e315]"
               }`}
             >
               <div className="text-4xl mb-6 transform transition-transform duration-500 hover:scale-110 origin-left inline-block">

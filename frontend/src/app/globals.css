@@ -14,8 +14,12 @@
   --font-mono: var(--font-martian);
 }
 
+html {
+  background: #000000;
+}
+
 body {
-  background: var(--background);
+  background: #000000;
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
