@@ -15,25 +15,45 @@ export const factoryAbi = [
   'function tokenToPool(address token) view returns (address)',
 ] as const
 
-// Note: MilestoneEscrow ABI — kept as a placeholder for when the escrow contract is implemented.
-// These functions do NOT exist in any deployed contract yet.
-export const escrowAbi = [
-  // Some teams implement verifyMilestone() with or without an index arg.
-  'function verifyMilestone() external',
-  'function verifyMilestone(uint256 milestoneIndex) external',
-  'function releaseMilestoneFunds(uint256 milestoneIndex) external',
+// EvolisPool ABI - The pool contract IS also the escrow
+export const poolAbi = [
+  // Read functions
+  'function projectToken() view returns (address)',
+  'function projectOwner() view returns (address)',
+  'function controller() view returns (address)',
+  'function fundingGoal() view returns (uint256)',
+  'function deadline() view returns (uint256)',
+  'function milestoneDeadline() view returns (uint256)',
+  'function totalRaised() view returns (uint256)',
+  'function goalReached() view returns (bool)',
+  'function milestoneAchieved() view returns (bool)',
+  'function contributions(address) view returns (uint256)',
+  'function bondingSupply() view returns (uint256)',
+  'function tokensSoldInCurve() view returns (uint256)',
+  
+  // Write functions
+  'function buyBondingCurve(uint256 minTokensOut) payable external',
+  'function refund() external',
+  'function submitMilestone() external',
+  'function claimMilestoneRefund() external',
+  'function claimEvoLp() external',
+  'function triggerEpochUnlock() external',
+] as const
 
-  // Optional reads (useful for future syncing)
-  'function token() view returns (address)',
-  'function creator() view returns (address)',
+// Legacy: escrowAbi kept for backward compatibility (EvolisPool acts as escrow)
+export const escrowAbi = [
+  // EvolisPool milestone functions
+  'function submitMilestone() external',
+  'function claimMilestoneRefund() external',
+
+  // Optional reads (match EvolisPool interface)
+  'function projectToken() view returns (address)',
+  'function projectOwner() view returns (address)',
   'function fundingGoal() view returns (uint256)',
   'function totalRaised() view returns (uint256)',
   'function deadline() view returns (uint256)',
   'function goalReached() view returns (bool)',
-
-  // If milestones is public array, solidity generates a getter.
-  // (string description,uint256 unlockAmount,bool verified,bool fundsReleased)
-  'function milestones(uint256) view returns (string,uint256,bool,bool)',
-  'function currentMilestone() view returns (uint256)',
+  'function milestoneAchieved() view returns (bool)',
+  'function milestoneDeadline() view returns (uint256)',
 ] as const
 
