@@ -1,12 +1,24 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useAccount } from 'wagmi';
 
 interface FounderActionStripProps {
-  isOwner: boolean;
   campaignId: string;
+  creatorAddress?: string; // We'll pass this from the parent or fetch it
 }
 
-export default function FounderActionStrip({ isOwner, campaignId }: FounderActionStripProps) {
+export default function FounderActionStrip({ campaignId, creatorAddress = "0x98154Db8A53BB5B79BfcA75fAEeAC988B3b11891" }: FounderActionStripProps) {
+  const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isOwner = mounted && isConnected && address?.toLowerCase() === creatorAddress.toLowerCase();
+
   if (!isOwner) return null;
 
   return (

@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Inter, Martian_Mono } from 'next/font/google';
+import { useAccount } from 'wagmi';
 
 const inter = Inter({ subsets: ['latin'] });
 const martianMono = Martian_Mono({ subsets: ['latin'] });
@@ -234,6 +235,16 @@ function FounderCampaignsGrid({ campaigns }: { campaigns: CreatedCampaign[] }) {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('My Investments');
   const [isFounderMode, setIsFounderMode] = useState(false); // Toggle for mock states
+  const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const displayAddress = mounted && isConnected && address 
+    ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+    : 'Not Connected';
 
   return (
     <div className={`min-h-screen bg-[#FCFAF6] text-[#111111] pb-24 ${inter.className}`}>
@@ -258,7 +269,7 @@ export default function DashboardPage() {
         </Link>
         
         <DashboardProfile 
-          address="vitalik.bnb" 
+          address={displayAddress} 
           totalInvested={isFounderMode ? 425.5 : 12.5} 
           projectsBacked={isFounderMode ? 12 : 1} 
         />

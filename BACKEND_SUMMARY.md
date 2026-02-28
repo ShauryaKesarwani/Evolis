@@ -17,13 +17,15 @@ Backend does NOT hold funds.
 
 Listens to:
 
-TokenDeployed (from TokenFactory)
+- TokenDeployed (from TokenFactory)
+
+Action: Parses TokenDeployed logs, fetches deployment via getDeployment(index), upserts into projects table.
 
 Planned (when MilestoneEscrow exists):
-ContributionMade
-MilestoneVerified
-FundsReleased
-RefundClaimed
+- ContributionMade
+- MilestoneVerified
+- FundsReleased
+- RefundClaimed
 
 Store in database.
 
@@ -77,7 +79,8 @@ GET /project/:id
 GET /project/:id/milestones
 GET /project/:id/contributors
 
-POST /verify-milestone
+POST /verify-milestone — requires `x-admin-address` header
+POST /release-milestone — requires `x-admin-address` header
 
 ---
 
@@ -97,9 +100,9 @@ Deploy Token → Factory.deployTokenV2()
 
 View Deployments → Backend API (GET /projects)
 
-Verify → Backend → Escrow.verifyMilestone() *(when escrow exists)*
+Verify → Admin calls POST /verify-milestone (with x-admin-address) → Backend calls Escrow.verifyMilestone()
 
-Release → Escrow.releaseMilestoneFunds() *(when escrow exists)*
+Release → Admin calls POST /release-milestone (with x-admin-address) → Backend calls Escrow.releaseMilestoneFunds()
 
 Display stats → Backend API
 
@@ -115,8 +118,7 @@ verifyMilestone()
 
 Never holds user funds.
 
-Note: POST /verify-milestone currently has NO authentication middleware.
-Any caller can invoke it. Auth must be added before production.
+Auth: Admin routes (verify-milestone, release-milestone) require `x-admin-address` header matching ADMIN_PRIVATE_KEY's derived address.
 
 ---
 

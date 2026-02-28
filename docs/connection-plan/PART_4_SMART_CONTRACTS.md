@@ -16,29 +16,29 @@
 
 | # | Action | Contract | Function / Data | Frontend Touch Point |
 |----|--------|----------|------------------|----------------------|
-| 19 | Create campaign | ProjectFactory | `createProject(name, symbol, totalSupply, fundingGoal, deadline, milestones)` | Create Campaign flow: map `CampaignData` (name, symbol, totalSupply, fundingGoal, deadlineDays → timestamp, milestones[]) to contract args; send tx from connected wallet. |
-| 20 | Get project meta (fallback) | ProjectFactory | `getProject(projectId)` | If backend has no project or for on-chain truth; frontend or backend can call (backend already uses this in projects route). |
-| 21 | Contribute | MilestoneEscrow | `contribute()` with BNB (msg.value) | TokenPurchasePanel "Confirm Purchase": send BNB to escrow.contribute(); amount = user input in BNB. |
-| 22 | Refund | MilestoneEscrow | `refund()` | Campaign Detail or Dashboard: show "Claim Refund" when refundsEnabled; call escrow.refund() with user signer. |
-| 23 | Verify milestone | Backend (admin) | Backend calls Escrow.verifyMilestone(milestoneIndex) | Admin UI calls POST /verify-milestone; no direct contract call from frontend for verify. |
-| 24 | Release milestone funds | MilestoneEscrow | `releaseMilestoneFunds()` (or per-milestone) | If done from frontend by admin: admin wallet signs release; else backend (needs contract wiring in backend). |
-| 25 | Token balance / price | UtilityToken + Escrow | token.balanceOf(user), escrow totalRaised / fundingGoal, token price derivation | Campaign Detail: user token balance; token price from funding params or derived (e.g. 1 token = price in BNB). |
+| 19 | Deploy token | TokenFactory | `deployTokenV2(DeploymentConfig)` | Create Campaign flow: map `CampaignData` to DeploymentConfig (name, symbol, totalSupply, initialLiquidityPercent, unlockDuration, epochDuration, router); send tx with msg.value. |
+| 20 | Get deployment meta (fallback) | TokenFactory | `getDeployment(index)` | Backend uses this; frontend can call if needed. |
+| 21 | Contribute | MilestoneEscrow | `contribute()` with BNB (msg.value) | TokenPurchasePanel "Confirm Purchase" — **N/A until MilestoneEscrow deployed**. |
+| 22 | Refund | MilestoneEscrow | `refund()` | Campaign Detail/Dashboard — **N/A until MilestoneEscrow deployed**. |
+| 23 | Verify milestone | Backend (admin) | Backend calls Escrow.verifyMilestone(milestoneIndex) | Admin UI calls POST /verify-milestone with x-admin-address. |
+| 24 | Release milestone funds | Backend (admin) | Backend calls Escrow.releaseMilestoneFunds(milestoneIndex) | Admin UI calls POST /release-milestone with x-admin-address. |
+| 25 | Token balance / price | Token + LiquidityController | token.balanceOf(user); token price from AMM | Campaign Detail: user token balance; token price from pool or derived. *total_raised is null in current schema (no sale mechanism).* |
 
 ---
 
 ## Notes
 
-- Contract ABIs and addresses must be available to the frontend (e.g. env: `NEXT_PUBLIC_FACTORY_ADDRESS`, `NEXT_PUBLIC_CHAIN_ID`, RPC).
-- Backend uses `backend/src/chain/abis.ts` (factoryAbi, escrowAbi)—frontend needs matching ABIs for Factory and Escrow (and Token if used).
-- Per-project escrow and token addresses come from API: `project.escrow_address`, `project.token_address`.
+- **Current contracts:** TokenFactory, Token, LiquidityController (PLU). MilestoneEscrow is **not yet implemented**; contribute, refund, verify, release require escrow to be deployed.
+- Contract ABIs: backend has `backend/src/chain/abis.ts` (factoryAbi, escrowAbi). Frontend needs matching ABIs.
+- Per-project addresses: `project.token_address`, `project.escrow_address` (controller mapped to escrow_address today).
 
 ---
 
 ## Deliverables
 
-- [ ] Factory ABI + Escrow ABI (and Token if needed) in frontend
-- [ ] Create Campaign: `createProject` tx with CampaignData mapped to args
-- [ ] TokenPurchasePanel: `contribute` tx with user BNB input
-- [ ] Campaign Detail: Refund CTA when refundsEnabled; `refund()` tx
-- [ ] Campaign Detail: token balance and price display (from token + escrow reads)
-- [ ] Optional: admin releaseMilestoneFunds from frontend if contract supports
+- [ ] TokenFactory ABI + Token ABI (and escrowAbi when MilestoneEscrow exists) in frontend
+- [ ] Create Campaign: `deployTokenV2` tx with CampaignData mapped to DeploymentConfig
+- [ ] TokenPurchasePanel: `contribute` tx — when MilestoneEscrow exists
+- [ ] Campaign Detail: Refund CTA — when MilestoneEscrow exists
+- [ ] Campaign Detail: token balance and price display (from token / AMM)
+- [ ] Admin: POST /verify-milestone and POST /release-milestone with x-admin-address header

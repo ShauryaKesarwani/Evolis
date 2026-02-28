@@ -4,6 +4,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SmoothScroll from "@/components/SmoothScroll";
+import AnchorScrollHandler from "@/components/AnchorScrollHandler";
+import Providers from "./providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -31,9 +33,12 @@ export default function RootLayout({
         className={`${inter.variable} ${martianMono.variable} antialiased selection:bg-accent selection:text-white`}
       >
         <SmoothScroll>
-          <Navbar />
-          {children}
-          <Footer />
+          <Providers>
+            <Navbar />
+            <AnchorScrollHandler />
+            {children}
+            <Footer />
+          </Providers>
         </SmoothScroll>
       </body>
     </html>

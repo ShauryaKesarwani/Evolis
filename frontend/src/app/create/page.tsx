@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
 import CreateCampaignLayout from '@/components/create-campaign/CreateCampaignLayout';
 import StepIndicator from '@/components/create-campaign/StepIndicator';
 import StepProjectInfo from '@/components/create-campaign/StepProjectInfo';
@@ -21,7 +22,14 @@ const STEP_NAMES = [
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<CampaignData>(initialCampaignData);
-  const [isWalletConnected, setIsWalletConnected] = useState(false); // Mock state for now
+  const { isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const isWalletConnected = mounted && isConnected;
 
   const updateData = (fields: Partial<CampaignData>) => {
     setData((prev) => ({ ...prev, ...fields }));
@@ -47,8 +55,9 @@ export default function CreateCampaignPage() {
   };
 
   const handleConnectWallet = () => {
-    setIsWalletConnected(true);
-    alert('Mock Wallet Connection Successful');
+    // This is handled by the global connect wallet modal via Navbar, 
+    // or we can prompt them to click the navbar button
+    alert('Please click "Connect Wallet" in the Navigation Bar to connect.');
   };
 
   return (

@@ -51,7 +51,7 @@ export default function HowItWorksSection() {
   const steps = isCreator ? creatorSteps : backerSteps;
 
   return (
-    <section className="relative py-24 px-6 text-[#FCFAF6] bg-[#111111] overflow-hidden transition-colors duration-700 ease-in-out">
+    <section id="how-it-works" className="relative py-24 px-6 text-[#FCFAF6] bg-[#111111] overflow-hidden transition-colors duration-700 ease-in-out">
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="mb-16 flex flex-col md:flex-row md:justify-between md:items-start text-center md:text-left gap-8">
           <div>

@@ -1,16 +1,30 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAccount, useBalance } from 'wagmi';
+import { formatEther } from 'viem';
 
 interface TokenPurchasePanelProps {
   tokenSymbol: string;
   tokenPriceBNB: number;
-  userBalanceBNB: number;
+  userBalanceBNBMock?: number; 
 }
 
-export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBalanceBNB }: TokenPurchasePanelProps) {
+export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBalanceBNBMock = 0 }: TokenPurchasePanelProps) {
   const [amount, setAmount] = useState<string>('');
   const [isPurchased, setIsPurchased] = useState(false);
+  const { address, isConnected } = useAccount();
+  const { data: balanceData } = useBalance({ address });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Use real balance if connected and data is loaded, otherwise use 0 (or mock for testing)
+  const actualBalanceBNB = mounted && isConnected && balanceData 
+    ? Number(formatEther(balanceData.value)) 
+    : 0;
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Basic validation to only allow numbers and decimals
@@ -21,7 +35,7 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
   const calculatedTokens = amount && !isNaN(Number(amount)) ? (Number(amount) / tokenPriceBNB).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0.00';
 
   const handlePurchase = () => {
-    if (!amount || Number(amount) <= 0 || Number(amount) > userBalanceBNB) return;
+    if (!amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB || !isConnected) return;
     setIsPurchased(true);
     // In actual implementation, this would trigger wagmi writeContract
   };
@@ -53,7 +67,7 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
             <div>
               <div className="flex justify-between text-sm mb-2 font-bold text-[#111111]/80">
                 <label htmlFor="amount">Amount (BNB)</label>
-                <span>Balance: {userBalanceBNB.toLocaleString()} BNB</span>
+                <span>Balance: {mounted && isConnected ? actualBalanceBNB.toLocaleString(undefined, { maximumFractionDigits: 4 }) : '---'} BNB</span>
               </div>
               <div className="relative">
                 <input
@@ -65,8 +79,9 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
                   className="w-full bg-[#FCFAF6] border-2 border-[#111111]/20 rounded-xl px-4 py-4 font-mono text-2xl font-bold focus:outline-none focus:border-[#b5e315] focus:ring-4 focus:ring-[#b5e315]/20 transition-all placeholder:text-[#111111]/20 pb-4"
                 />
                 <button 
-                  onClick={() => setAmount(userBalanceBNB.toString())}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wider bg-[#111111]/5 hover:bg-[#111111]/10 px-3 py-1.5 rounded-md transition-colors border border-[#111111]/10"
+                  onClick={() => mounted && isConnected && setAmount(actualBalanceBNB.toString())}
+                  disabled={!mounted || !isConnected}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wider bg-[#111111]/5 hover:bg-[#111111]/10 px-3 py-1.5 rounded-md transition-colors border border-[#111111]/10 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Max
                 </button>
@@ -85,10 +100,10 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
 
           <button 
             onClick={handlePurchase}
-            disabled={!amount || Number(amount) <= 0 || Number(amount) > userBalanceBNB}
+            disabled={!mounted || !isConnected || !amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB}
             className="w-full bg-[#b5e315] hover:bg-[#a3cc13] disabled:bg-[#111111]/10 disabled:text-[#111111]/40 text-[#111111] font-mono font-bold text-lg md:text-xl py-4 rounded-xl border-2 border-[#111111] shadow-[4px_4px_0px_#111111] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#111111] disabled:border-[#111111]/20 disabled:shadow-none"
           >
-            Confirm Purchase
+            {mounted && isConnected ? 'Confirm Purchase' : 'Connect Wallet to Purchase'}
           </button>
         </>
       )}

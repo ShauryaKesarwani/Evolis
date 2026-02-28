@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-- Part 6 (Environment): `NEXT_PUBLIC_API_URL` set to backend base URL (e.g. `http://localhost:3000`)
+- Part 6 (Environment): `NEXT_PUBLIC_API_URL` set to backend base URL (e.g. `http://localhost:3001`)
 
 ---
 
@@ -27,8 +27,8 @@
 
 | # | Frontend Location | API Endpoint | Purpose |
 |---|--------------------|--------------|---------|
-| 17 | `frontend/src/app/admin/page.tsx` | `POST /verify-milestone` | On "Approve & Release Funds": send `{ projectId, milestoneIndex }` (and optionally `proof`, `escrowAddress`). Backend calls Escrow.verifyMilestone(milestoneIndex) with admin wallet. |
-| 18 | Same | Optional: "Release funds" step | Backend currently verifies only; release may be separate Escrow.releaseMilestoneFunds() call from backend or from frontend with admin signer—clarify with contract flow. |
+| 17 | `frontend/src/app/admin/page.tsx` | `POST /verify-milestone` | On "Approve": send `{ projectId, milestoneIndex }` with `x-admin-address` header. Backend calls Escrow.verifyMilestone(milestoneIndex). milestoneIndex is required. |
+| 18 | Same | `POST /release-milestone` | On "Release funds": send `{ projectId, milestoneIndex }` with `x-admin-address` header. Backend calls Escrow.releaseMilestoneFunds(milestoneIndex). Two-step flow: verify first, then release. |
 
 ---
 
@@ -39,7 +39,9 @@
 - `GET /project/:id/milestones` → `{ projectId, milestones: MilestoneRow[] }`
 - `GET /project/:id/contributors` → `{ projectId, contributors: { contributor, amount }[] }`
 
-**POST /verify-milestone** body: `{ projectId: number, milestoneIndex?: number, proof?: string, escrowAddress?: string }`
+**POST /verify-milestone** — requires `x-admin-address` header. Body: `{ projectId: number, milestoneIndex: number }` (milestoneIndex required)
+
+**POST /release-milestone** — requires `x-admin-address` header. Body: `{ projectId: number, milestoneIndex: number }`
 
 ---
 
@@ -49,4 +51,4 @@
 - [ ] CampaignGrid fetches `GET /projects` and maps to CampaignCard
 - [ ] Campaign Detail fetches project, milestones, contributors
 - [ ] Dashboard filters projects by creator/contributor (or backend extends API)
-- [ ] Admin fetches projects/milestones; "Approve" calls POST /verify-milestone
+- [ ] Admin fetches projects/milestones; "Approve" calls POST /verify-milestone (with x-admin-address); "Release" calls POST /release-milestone

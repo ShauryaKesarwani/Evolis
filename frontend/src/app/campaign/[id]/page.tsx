@@ -80,14 +80,13 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
 
   return (
     <>
-      <FounderActionStrip isOwner={isOwner} campaignId={campaignId} />
+      <FounderActionStrip campaignId={campaignId} creatorAddress="0x98154Db8A53BB5B79BfcA75fAEeAC988B3b11891" />
       
       <CampaignDetailLayout
         sidebar={
           <TokenPurchasePanel 
             tokenSymbol={mockToken.symbol}
             tokenPriceBNB={mockToken.priceBNB}
-            userBalanceBNB={mockToken.userBalanceBNB}
           />
         }
       >

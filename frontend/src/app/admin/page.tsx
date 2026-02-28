@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Inter, Martian_Mono } from 'next/font/google';
+import { useAccount, useDisconnect } from 'wagmi';
 
 const inter = Inter({ subsets: ['latin'] });
 const martianMono = Martian_Mono({ subsets: ['latin'] });
@@ -269,8 +270,20 @@ export default function AdminPage() {
   const [isAdminChecking, setIsAdminChecking] = useState(true);
   const [milestones, setMilestones] = useState<Milestone[]>(mockMilestones);
   const [selectedId, setSelectedId] = useState<string | null>(mockMilestones[0].id);
+  
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const [mounted, setMounted] = useState(false);
+  
+  // NOTE: This usually lives in .env, checking against it. 
+  // For safety and UI demo we'll just check if they are connected as a demo "admin" 
+  // or use a placeholder format. (e.g. 0xAdmin... or environment variables) 
+  const EXPECTED_ADMIN = process.env.NEXT_PUBLIC_ADMIN_ADDRESS || "0x98154Db8A53BB5B79BfcA75fAEeAC988B3b11891".toLowerCase();
+
+  const isAuthorized = mounted && isConnected && address?.toLowerCase() === EXPECTED_ADMIN.toLowerCase();
 
   useEffect(() => {
+    setMounted(true);
     // Simulate checking admin access
     const timer = setTimeout(() => {
       setIsAdminChecking(false);
@@ -300,6 +313,25 @@ export default function AdminPage() {
 
   const selectedMilestone = milestones.find(m => m.id === selectedId);
 
+  if (!isAuthorized && !isAdminChecking && mounted) {
+    return (
+      <div className="min-h-screen bg-[#FCFAF6] flex items-center justify-center font-mono text-[#111111]">
+        <div className="flex flex-col items-center gap-4 text-center max-w-md p-8 border-2 border-red-200 bg-red-50 rounded-2xl">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-red-500" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+          <h2 className="text-xl font-bold text-red-700">Access Denied</h2>
+          <p className="text-red-600/80 mb-4">Your connected wallet ({address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'None'}) is not authorized to access the platform admin panel.</p>
+          <button 
+            onClick={() => disconnect()}
+            className="px-6 py-2 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition"
+          >
+            Disconnect Wallet
+          </button>
+          <Link href="/" className="underline text-sm text-red-600/60 hover:text-red-800 mt-2">Return Home</Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-[#FCFAF6] text-[#111111] ${inter.className}`}>
       <main className="max-w-6xl mx-auto py-12 px-4 md:px-8">
@@ -307,7 +339,7 @@ export default function AdminPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
           Back to Home
         </Link>
-        <AdminHeader adminWallet="0xAdmin...9aF" globalBalance={24500} />
+        <AdminHeader adminWallet={address ? `${address.slice(0, 6)}...${address.slice(-4)}` : "Unknown"} globalBalance={24500} />
         
         <div className="grid lg:grid-cols-3 gap-8 md:gap-12">
           {/* Left Column: List */}

@@ -18,14 +18,14 @@
 ## Frontend (`.env.local` or equivalent)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_CHAIN_ID=97
 NEXT_PUBLIC_FACTORY_ADDRESS=0x...
 ```
 
-- `NEXT_PUBLIC_API_URL` — backend base URL (e.g. `http://localhost:3000` for local dev)
+- `NEXT_PUBLIC_API_URL` — backend base URL (e.g. `http://localhost:3001` for local dev)
 - `NEXT_PUBLIC_CHAIN_ID` — BNB Chain (56 mainnet, 97 testnet)
-- `NEXT_PUBLIC_FACTORY_ADDRESS` — deployed ProjectFactory address
+- `NEXT_PUBLIC_FACTORY_ADDRESS` — deployed TokenFactory address
 
 ---
 
@@ -33,13 +33,13 @@ NEXT_PUBLIC_FACTORY_ADDRESS=0x...
 
 Per `backend/README.md` and `backend/src/config.ts`:
 
-- `PORT` — server port (default 3000)
+- `PORT` — server port (default 3001)
 - `DATABASE_URL` — SQLite path (e.g. `file:./data/dev.sqlite`)
 - `RPC_URL` — BNB Chain RPC
-- `FACTORY_ADDRESS` — ProjectFactory address (for indexer + chain fetch)
+- `FACTORY_ADDRESS` — TokenFactory address (for indexer + chain fetch)
 - `ADMIN_PRIVATE_KEY` — admin wallet for verifyMilestone
 - `ENABLE_INDEXER` — `true` to run indexer
-- `CORS_ORIGIN` — allowed frontend origin (e.g. `http://localhost:3001`)
+- `CORS_ORIGIN` — allowed frontend origin (e.g. `http://localhost:3000` for Next.js dev)
 
 ---
 

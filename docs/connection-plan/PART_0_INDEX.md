@@ -23,9 +23,9 @@ The frontend–backend connection work is split into **7 executable parts**. Eac
 
 - **PART_1** — Master prompt for agents/developers to understand the system and find connection points
 - **PART_2** — MetaMask integration (Navbar, modal, balance, signer) — *execute first for wallet*
-- **PART_3** — Backend API wiring (GET projects, project/:id, milestones, contributors; POST verify-milestone)
-- **PART_4** — Smart contract calls (createProject, contribute, refund, verify/release)
-- **PART_5** — Route and link fixes (CampaignCard, Dashboard, FounderActionStrip, submit-milestone route)
+- **PART_3** — Backend API wiring (GET projects, project/:id, milestones, contributors; POST verify-milestone, POST release-milestone; x-admin-address header)
+- **PART_4** — Smart contract calls (deployTokenV2; contribute/refund when MilestoneEscrow exists; verify/release via backend)
+- **PART_5** — Route and link fixes (CampaignCard, Dashboard links fixed; submit-milestone page exists; Verifications link TODO)
 - **PART_6** — Environment variables (API URL, chain id, Factory address)
 - **PART_7** — Per-page checklist of required functionality before connecting
 
