@@ -2,20 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAccount, useBalance } from 'wagmi';
-import { formatEther } from 'viem';
+import { formatEther, parseEther } from 'viem';
+import { useRouter } from 'next/navigation';
 
 interface TokenPurchasePanelProps {
+  projectId: string;
   tokenSymbol: string;
   tokenPriceBNB: number;
   userBalanceBNBMock?: number; 
 }
 
-export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBalanceBNBMock = 0 }: TokenPurchasePanelProps) {
+export default function TokenPurchasePanel({ projectId, tokenSymbol, tokenPriceBNB, userBalanceBNBMock = 0 }: TokenPurchasePanelProps) {
   const [amount, setAmount] = useState<string>('');
   const [isPurchased, setIsPurchased] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { address, isConnected } = useAccount();
   const { data: balanceData } = useBalance({ address });
   const [mounted, setMounted] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -34,10 +39,43 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
 
   const calculatedTokens = amount && !isNaN(Number(amount)) ? (Number(amount) / tokenPriceBNB).toLocaleString(undefined, { maximumFractionDigits: 2 }) : '0.00';
 
-  const handlePurchase = () => {
-    if (!amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB || !isConnected) return;
-    setIsPurchased(true);
-    // In actual implementation, this would trigger wagmi writeContract
+  const handlePurchase = async () => {
+    setSubmitError(null);
+    if (!mounted || !isConnected || !address) return;
+    if (!amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB) return;
+
+    // Persist as wei string in backend.
+    let amountWei: bigint;
+    try {
+      amountWei = parseEther(amount);
+    } catch {
+      setSubmitError('Invalid amount');
+      return;
+    }
+
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    try {
+      setIsSubmitting(true);
+      const res = await fetch(`${apiUrl}/project/${projectId}/contribute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contributor: address, amount: amountWei.toString() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || 'Contribution failed');
+      }
+
+      setIsPurchased(true);
+      // Refresh server components on the page so contributors/raised update.
+      router.refresh();
+    } catch (e: any) {
+      console.error(e);
+      setSubmitError(e?.message || 'Contribution failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -98,12 +136,18 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
             <strong>🔒 Smart Contract Escrow:</strong> Your funds are securely held on-chain and only released to the founders as they achieve verified milestones.
           </div>
 
+          {submitError && (
+            <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 text-sm font-bold text-red-700">
+              {submitError}
+            </div>
+          )}
+
           <button 
             onClick={handlePurchase}
-            disabled={!mounted || !isConnected || !amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB}
+            disabled={!mounted || !isConnected || isSubmitting || !amount || Number(amount) <= 0 || Number(amount) > actualBalanceBNB}
             className="w-full bg-[#b5e315] hover:bg-[#a3cc13] disabled:bg-[#111111]/10 disabled:text-[#111111]/40 text-[#111111] font-mono font-bold text-lg md:text-xl py-4 rounded-xl border-2 border-[#111111] shadow-[4px_4px_0px_#111111] transition-all active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#111111] disabled:border-[#111111]/20 disabled:shadow-none"
           >
-            {mounted && isConnected ? 'Confirm Purchase' : 'Connect Wallet to Purchase'}
+            {mounted && isConnected ? (isSubmitting ? 'Submitting…' : 'Confirm Purchase') : 'Connect Wallet to Purchase'}
           </button>
         </>
       )}

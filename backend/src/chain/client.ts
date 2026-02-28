@@ -4,7 +4,12 @@ import { escrowAbi, factoryAbi } from './abis'
 
 export function getProvider() {
   const env = getEnv()
-  if (!env.RPC_URL) throw new Error('RPC_URL is required')
+  if (!env.RPC_URL) {
+    throw new Error(
+      `RPC_URL is required (cwd=${process.cwd()}). ` +
+        `Ensure you have backend/.env with RPC_URL=... and you started the backend using the backend entrypoint.`,
+    )
+  }
   return new JsonRpcProvider(env.RPC_URL)
 }
 
@@ -43,6 +48,11 @@ export async function fetchProjectFromChain(projectId: number) {
   return {
     id: projectId,
     name: null,
+    tagline: null,
+    logo_url: null,
+    website_url: null,
+    symbol: null,
+    category: null,
     token_address: token,
     escrow_address: pool || controller, // Use pool address if available, fallback to controller
     controller_address: controller,

@@ -95,17 +95,29 @@ export default function LiquidityDashboard({ controllerAddress }: { controllerAd
       );
       if (!liquidityUnlockedEvent) return;
 
-      const currentBlock = await publicClient.getBlockNumber();
-      // Fetch only the last 5000 blocks to avoid RPC limit exceeded errors
-      // In production, an indexer would keep track of the last processed block
-      const fromBlock = currentBlock > BigInt(5000) ? currentBlock - BigInt(5000) : BigInt(0);
+      // Many public RPCs (incl. BSC testnet) enforce limits on `eth_getLogs` range/size.
+      // Query recent blocks with backoff instead of scanning from genesis.
+      const latestBlock = await publicClient.getBlockNumber();
+      const windows = [BigInt(200000), BigInt(50000), BigInt(20000), BigInt(5000)];
+      let logs: any[] = [];
+      let lastErr: unknown = null;
+      for (const window of windows) {
+        const fromBlock = latestBlock > window ? latestBlock - window : BigInt(0);
+        try {
+          logs = await publicClient.getLogs({
+            address: controllerAddress as `0x${string}`,
+            event: liquidityUnlockedEvent as any,
+            fromBlock,
+            toBlock: latestBlock,
+          });
+          lastErr = null;
+          break;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
 
-      const logs = await publicClient.getLogs({
-        address: controllerAddress as `0x${string}`,
-        event: liquidityUnlockedEvent as any,
-        fromBlock: fromBlock,
-        toBlock: 'latest'
-      });
+      if (lastErr) throw lastErr;
 
       const events: LiquidityEvent[] = [];
       for (const log of logs) {
@@ -146,7 +158,7 @@ export default function LiquidityDashboard({ controllerAddress }: { controllerAd
 
   useEffect(() => {
     fetchLiquidityHistory();
-  }, [publicClient]);
+  }, [publicClient, controllerAddress]);
 
   const handleUnlockEpoch = () => {
     unlockEpoch({

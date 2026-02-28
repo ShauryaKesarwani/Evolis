@@ -40,7 +40,7 @@ const ROUTER_ABI = [
 
 export default function TokenTrader() {
   const { address } = useAccount();
-  const [tokenAddress, setTokenAddress] = useState('0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1');
+  const [tokenAddress, setTokenAddress] = useState('0x4762610940Ad0aA5Aa7c6911E8EE690f8BDc2ed7');
   const [tokenSymbol, setTokenSymbol] = useState('TEST');
   const [buyAmount, setBuyAmount] = useState('0.01');
   const [sellAmount, setSellAmount] = useState('100');

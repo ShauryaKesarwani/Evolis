@@ -43,7 +43,7 @@ const STEP_NAMES = [
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<CampaignData>(initialCampaignData);
-  const { isConnected, chainId } = useAccount();
+  const { isConnected, chainId, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const [mounted, setMounted] = useState(false);
   const navRouter = useRouter();
@@ -136,7 +136,7 @@ export default function CreateCampaignPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             name: data.name || data.tokenName,
-            creator: (window as any).ethereum?.selectedAddress || '',
+            creator: address || '',
             tagline: data.tagline,
             logoUrl: data.logoUrl,
             websiteUrl: data.websiteUrl,

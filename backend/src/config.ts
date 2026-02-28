@@ -1,4 +1,26 @@
 import { z } from 'zod'
+import dotenv from 'dotenv'
+import { existsSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// Load env vars reliably even if Bun is started from the repo root.
+// dotenv/config only reads from process.cwd()/.env, which can be wrong.
+loadEnvFiles()
+
+function loadEnvFiles() {
+  const cwdEnv = resolve(process.cwd(), '.env')
+
+  const here = dirname(fileURLToPath(import.meta.url))
+  const backendEnv = resolve(here, '../.env')
+  const backendEnvLocal = resolve(here, '../.env.local')
+
+  const candidates = [cwdEnv, backendEnv, backendEnvLocal]
+  for (const envPath of candidates) {
+    if (!existsSync(envPath)) continue
+    dotenv.config({ path: envPath, override: false })
+  }
+}
 
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive().default(3001),

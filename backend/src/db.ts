@@ -40,6 +40,11 @@ export type ContributionAggRow = {
   amount: string
 }
 
+type ContributionRow = {
+  contributor: string
+  amount: string
+}
+
 let dbSingleton: Database | null = null
 
 export function getDb(): Database {
@@ -245,9 +250,14 @@ export function upsertMilestone(params: {
         updated_at=excluded.updated_at
     `,
   ).run({
-    ...params,
-    created_at: ts,
-    updated_at: ts,
+    $project_id: params.project_id,
+    $milestone_index: params.milestone_index,
+    $description: params.description,
+    $unlock_amount: params.unlock_amount,
+    $verified: params.verified ?? null,
+    $released: params.released ?? null,
+    $created_at: ts,
+    $updated_at: ts,
   })
 }
 
@@ -259,27 +269,61 @@ export function addContribution(params: {
 }) {
   const db = getDb()
   const ts = nowUnix()
+
   db.prepare(
     `INSERT INTO contributions (project_id, contributor, amount, tx_hash, created_at)
      VALUES ($project_id, $contributor, $amount, $tx_hash, $created_at)`,
   ).run({
-    ...params,
-    tx_hash: params.tx_hash ?? null,
-    created_at: ts,
+    $project_id: params.project_id,
+    $contributor: params.contributor,
+    $amount: params.amount,
+    $tx_hash: params.tx_hash ?? null,
+    $created_at: ts,
   })
+
+  // Keep projects.total_raised in sync (stored as wei string).
+  const rows = db
+    .prepare('SELECT contributor, amount FROM contributions WHERE project_id = ?')
+    .all(params.project_id) as ContributionRow[]
+
+  let total = 0n
+  for (const row of rows) {
+    try {
+      total += BigInt(row.amount)
+    } catch {
+      // ignore malformed rows
+    }
+  }
+
+  db.prepare('UPDATE projects SET total_raised = ?, updated_at = ? WHERE id = ?').run(
+    total.toString(),
+    ts,
+    params.project_id,
+  )
 }
 
 export function listContributors(projectId: number): ContributionAggRow[] {
   const db = getDb()
-  return db
-    .prepare(
-      `SELECT contributor, CAST(SUM(CAST(amount AS REAL)) AS TEXT) AS amount
-       FROM contributions
-       WHERE project_id = ?
-       GROUP BY contributor
-       ORDER BY CAST(amount AS REAL) DESC`,
-    )
-    .all(projectId) as ContributionAggRow[]
+
+  const rows = db
+    .prepare('SELECT contributor, amount FROM contributions WHERE project_id = ?')
+    .all(projectId) as ContributionRow[]
+
+  const sums = new Map<string, bigint>()
+  for (const row of rows) {
+    const who = (row.contributor || '').toLowerCase()
+    if (!who) continue
+    try {
+      const amountWei = BigInt(row.amount)
+      sums.set(who, (sums.get(who) ?? 0n) + amountWei)
+    } catch {
+      // ignore malformed rows
+    }
+  }
+
+  return [...sums.entries()]
+    .sort((a, b) => (a[1] === b[1] ? 0 : a[1] > b[1] ? -1 : 1))
+    .map(([contributor, amount]) => ({ contributor, amount: amount.toString() }))
 }
 
 export function getSyncState(key: string): string | null {

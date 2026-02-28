@@ -259,10 +259,8 @@ export default function DashboardPage() {
             const myProjects = projects.filter(
               (p: any) => p.creator?.toLowerCase() === address.toLowerCase()
             );
-            // If creator filter found nothing (contract stores 0x000...), show all
-            if (myProjects.length > 0) {
-              filteredProjects = myProjects;
-            }
+            // Strict wallet scoping: if none match, show none.
+            filteredProjects = myProjects;
           }
           
           const myCampaigns = filteredProjects.map((p: any) => ({

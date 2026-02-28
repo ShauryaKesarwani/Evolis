@@ -111,6 +111,7 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
       <CampaignDetailLayout
         sidebar={
           <TokenPurchasePanel 
+            projectId={campaignId}
             tokenSymbol={token.symbol}
             tokenPriceBNB={token.priceBNB}
           />
