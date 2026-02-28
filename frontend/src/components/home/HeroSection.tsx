@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLenis } from "@studio-freight/react-lenis";
 import { useState, useEffect } from "react";
+import EscrowSphere from "./EscrowSphere";
 
 const SYMBOLS = "!@#$%^&*()_+";
 
@@ -115,35 +116,12 @@ export default function HeroSection() {
           </div>
         </div>
         
-        {/* Right Column (Visual / Graphic) */}
-        <div className="relative w-full aspect-square md:aspect-[4/3] rounded-[2rem] bg-accent border-[3px] border-[#111111] p-8 flex items-center justify-center overflow-hidden shadow-[8px_8px_0px_#111111]">
-          {/* Abstract Mockup Element inside */}
+        {/* Right Column (Interactive Sphere) */}
+        <div className="relative w-full aspect-square md:aspect-[4/3] rounded-[2rem] bg-white border-[3px] border-[#111111] overflow-hidden shadow-[8px_8px_0px_#111111]">
+          {/* Abstract Background Element inside */}
           <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none mix-blend-overlay"></div>
           
-          <div className="w-[85%] h-[90%] bg-white rounded-2xl border-[3px] border-[#111111] p-6 flex flex-col shadow-lg z-10">
-            <div className="flex justify-between items-center mb-8 border-b border-[#111111]/10 pb-4">
-              <div className="font-mono font-bold text-sm">Escrow Status</div>
-              <div className="px-3 py-1 bg-accent/20 text-[#111111] text-xs font-bold rounded-full border border-[#111111]/20">Active</div>
-            </div>
-            
-            <div className="text-4xl font-mono font-black mb-1">35,450 <span className="text-lg text-[#111111]/50">BNB</span></div>
-            <div className="text-sm font-sans text-[#111111]/60 mb-8 tracking-wide">LOCKED IN SMART CONTRACT</div>
-            
-            <div className="space-y-4 flex-grow">
-              <div className="w-full bg-[#f4f4f4] h-8 rounded-full border border-[#111111]/10 overflow-hidden relative">
-                <div className="absolute top-0 left-0 bg-[#111111] h-full w-[25%] border-r border-[#111111]"></div>
-                <div className="absolute inset-0 flex items-center px-4 font-mono text-[10px] text-[#FCFAF6] z-10 mix-blend-difference font-bold tracking-widest uppercase">
-                  Milestone 1 unlocked
-                </div>
-              </div>
-              
-              <div className="w-full bg-[#f4f4f4] h-8 rounded-full border border-[#111111]/10 overflow-hidden relative">
-                 <div className="absolute inset-0 flex items-center px-4 font-mono text-[10px] text-[#111111]/50 tracking-widest uppercase">
-                  Milestone 2 pending verification
-                </div>
-              </div>
-            </div>
-          </div>
+          <EscrowSphere completionPercentage={65} />
         </div>
 
       </div>
