@@ -35,15 +35,30 @@ export function getEscrowContractWithAdmin(escrowAddress: string) {
 
 export async function fetchProjectFromChain(projectId: number) {
   const factory = getFactoryContract()
-  const meta = await factory.getDeployment(projectId)
+  const poolAddress = await factory.getPool(projectId)
 
-  // Ethers v6 structs come back as both array + named keys.
-  const token = meta.token as string
-  const controller = meta.controller as string
-  const pool = meta.pool as string
-  const owner = meta.owner as string
-  const totalSupply = (meta.totalSupply as bigint).toString()
-  const timestamp = Number(meta.timestamp as bigint)
+  // Query the pool contract for details
+  const poolAbi = [
+    'function projectToken() view returns (address)',
+    'function projectOwner() view returns (address)',
+    'function controller() view returns (address)',
+    'function fundingGoal() view returns (uint256)',
+    'function deadline() view returns (uint256)',
+    'function totalRaised() view returns (uint256)',
+    'function goalReached() view returns (bool)',
+  ]
+  
+  const pool = new Contract(poolAddress, poolAbi, getProvider())
+  
+  const [token, owner, controller, fundingGoal, deadline, totalRaised, goalReached] = await Promise.all([
+    pool.projectToken(),
+    pool.projectOwner(),
+    pool.controller(),
+    pool.fundingGoal(),
+    pool.deadline(),
+    pool.totalRaised(),
+    pool.goalReached(),
+  ])
 
   return {
     id: projectId,
@@ -53,13 +68,13 @@ export async function fetchProjectFromChain(projectId: number) {
     website_url: null,
     symbol: null,
     category: null,
-    token_address: token,
-    escrow_address: pool || controller, // Use pool address if available, fallback to controller
-    controller_address: controller,
-    creator: owner,
-    funding_goal: totalSupply, // placeholder: no funding goal in current contract
-    total_raised: null,
-    deadline: timestamp, // using deployment timestamp; no deadline in current contract
-    status: 'ACTIVE',
+    token_address: token as string,
+    escrow_address: poolAddress, // EvolisPool IS the escrow
+    controller_address: controller as string,
+    creator: owner as string,
+    funding_goal: (fundingGoal as bigint).toString(),
+    total_raised: (totalRaised as bigint).toString(),
+    deadline: Number(deadline as bigint),
+    status: goalReached ? 'FUNDED' : 'ACTIVE',
   }
 }

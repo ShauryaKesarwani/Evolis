@@ -1,14 +1,18 @@
 export const factoryAbi = [
-  // Events
-  'event TokenDeployed(address indexed token, address indexed controller, address indexed owner, string name, string symbol, uint256 totalSupply, uint256 initialLiquidity, uint256 lockedTokens, uint256 unlockDuration, uint256 epochDuration)',
+  // Events (EvolisFactory)
+  'event PoolCreated(address indexed pool, address indexed projectToken, address indexed projectOwner, uint256 fundingGoal, uint256 deadline, uint256 milestoneDeadline)',
 
   // Write
-  'function deployTokenV2(tuple(string name, string symbol, uint256 totalSupply, uint256 initialLiquidityPercent, uint256 unlockDuration, uint256 epochDuration, address router) config) external payable returns (address tokenAddr, address controllerAddr)',
+  'function createPool(tuple(string lpName, string lpSymbol, address projectToken, address projectOwner, uint256 bondingSupply, uint256 bondingInitialPrice, uint256 bondingSlope, uint256 fundingGoal, uint256 deadline, uint256 milestoneDeadline) config) external returns (address pool)',
+  'function setPoolController(address pool, address controller) external',
 
-  // Read
-  'function getDeployment(uint256 index) view returns (tuple(address token, address controller, address pool, address owner, uint256 timestamp, uint256 totalSupply, uint256 bondingSupply, uint256 lockedTokens))',
-  'function getTotalDeployments() view returns (uint256)',
-  'function getUserDeployments(address user) view returns (address[])',
+  // Read (EvolisFactory interface)
+  'function poolCount() view returns (uint256)',
+  'function getPool(uint256 index) view returns (address)',
+  'function getPoolsByOwner(address owner) view returns (address[])',
+  'function getPoolByToken(address token) view returns (address)',
+  'function isPoolFromFactory(address pool) view returns (bool)',
+  'function tokenToPool(address token) view returns (address)',
 ] as const
 
 // Note: MilestoneEscrow ABI — kept as a placeholder for when the escrow contract is implemented.

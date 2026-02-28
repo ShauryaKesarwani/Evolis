@@ -17,7 +17,7 @@ projectsRoutes.post('/projects', async (c) => {
 
     // Get the latest project ID from the factory contract
     const factory = getFactoryContract()
-    const total = Number(await factory.getTotalDeployments())
+    const total = Number(await factory.poolCount())
     const projectId = total - 1
 
     // Ensure the project is indexed

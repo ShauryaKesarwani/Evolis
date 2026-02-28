@@ -14,8 +14,8 @@ export async function startIndexer() {
   // Validate factory contract is reachable before entering polling loop
   try {
     const factory = getFactoryContract()
-    const total = Number(await factory.getTotalDeployments())
-    console.log(`[indexer] factory validated — ${total} deployment(s) found`)
+    const total = Number(await factory.poolCount())
+    console.log(`[indexer] factory validated — ${total} pool(s) found`)
   } catch (err: any) {
     console.warn(
       `[indexer] ⚠️  Factory contract at ${env.FACTORY_ADDRESS} is not responding.`
@@ -27,17 +27,17 @@ export async function startIndexer() {
       '[indexer]    The contract may not be deployed on this network. Indexer will not start.'
     )
     console.warn(
-      '[indexer]    Deploy TokenFactory to BNB Testnet and update FACTORY_ADDRESS in .env'
+      '[indexer]    Deploy EvolisFactory to BNB Testnet and update FACTORY_ADDRESS in .env'
     )
     return
   }
 
-  // Polling loop: every cycle, check getTotalDeployments() and sync any new ones.
+  // Polling loop: every cycle, check poolCount() and sync any new ones.
   let consecutiveErrors = 0
   while (true) {
     try {
       const factory = getFactoryContract()
-      const total = Number(await factory.getTotalDeployments())
+      const total = Number(await factory.poolCount())
 
       if (total > 0) {
         // Check each deployment, skip ones we already have
