@@ -1,0 +1,11 @@
+{
+    "name": "evolis",
+    "private": true,
+    "scripts": {
+        "build": "cd frontend && bun next build",
+        "dev:frontend": "cd frontend && bun next dev",
+        "dev:backend": "cd backend && bun dev",
+        "start:frontend": "cd frontend && bun next start",
+        "start:backend": "cd backend && bun start"
+    }
+}
