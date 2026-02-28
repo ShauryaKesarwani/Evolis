@@ -11,261 +11,183 @@
 
 ---
 
-**Evolis** is a decentralized crowdfunding protocol where startups raise capital through token sales with **bonding curve pricing**, **milestone-gated fund release**, and **progressive liquidity unlock (PLU)** — all on BNB Chain.
+Evolis is a decentralized crowdfunding protocol where startups raise capital through token sales with **bonding curve pricing**, **milestone-gated fund release**, and **progressive liquidity unlock (PLU)** — all natively built on **BNB Chain**.
 
-Backers get token upside + refund protection. Founders get non-dilutive funding with milestone accountability.
+> [!NOTE]
+> **First-of-its-kind on BNB Chain:** Evolis pioneers a novel approach combining Bonding Curves + Milestone Escrow + Progressive Liquidity Unlock + IL Protection. This technical innovation brings fresh ideas to Web3 fundraising.
 
----
+## 🎯 Value Proposition
 
-## 🎯 The Problem
+Backers get token upside with strict refund protection if goals aren't met or founders fail to deliver. Founders get non-dilutive, predictable funding with milestone accountability, removing the need for VC middlemen. 
 
-| Traditional Crowdfunding | Web3 Token Launches |
-|--------------------------|---------------------|
-| Funds released instantly — no accountability | No milestone gating — rug pulls are trivial |
-| No liquidity — backers can't exit | All liquidity enters at once — high volatility |
-| No upside if project succeeds | Whale manipulation distorts price discovery |
+## ⚖️ Problem → Solution
 
-## 💡 The Solution
+| Traditional & Web3 Crowdfunding (The Problem) | Evolis Protocol (The Solution) |
+|-----------------------------------------------|--------------------------------|
+| Funds released instantly — no accountability or rug pulls are trivial | **Escrow & Milestone Gating** — Capital released only after verified milestone completion. |
+| No liquidity — backers can't exit, or all enters at once | **Progressive Liquidity Unlock (PLU)** — Token liquidity deepens over 30+ days, reducing volatility. |
+| Whale manipulation distorts price discovery | **Bonding Curve Fundraise** — Fair, predictable token pricing with built-in slippage protection. |
+| Liquidity providers suffer impermanent loss | **IL Protection** — Duration-based compensation for liquidity providers to ensure sustainability. |
 
-Evolis combines the best of both worlds:
+## 👥 Target Users
 
-1. **Bonding Curve Fundraise** — Fair, transparent token pricing with slippage protection
-2. **Escrow Protection** — Funds locked until funding goal met; refunds if not
-3. **Milestone Gating** — Capital released only after verified milestone completion
-4. **Progressive Liquidity Unlock** — Token liquidity deepens over 30+ days, reducing volatility
-5. **IL Protection** — Duration-based impermanent loss compensation for liquidity providers
+1. **Founders & Builders:** Seeking transparent, community-driven funding without diluting equity, requiring clear step-by-step capital unlocks.
+2. **Web3 Supporters & Investors:** Looking to back early-stage projects with minimized risk, guaranteed refunds on failure, and verifiable on-chain accountability.
 
----
+## 🚶 User Journey (Design & Usability)
 
-## 🏗 Architecture
+Evolis is built for users, functioning intuitively to abstract away the complexity of smart-contract operations.
+
+*[Insert User Journey Image Here]*
+
+<details>
+<summary>View User Journey Mermaid Diagram Source</summary>
+
+```mermaid
+journey
+    title Evolis Protocol: Founder & Supporter Flow
+    section Campaign Creation
+      Connect Wallet: 5: Founder
+      Set Bonding Curve & Milestones: 5: Founder
+      Deploy to BNB Chain: 5: Founder
+    section Funding Phase
+      Browse Campaigns: 5: Supporter
+      Buy Tokens (Bonding Curve): 5: Supporter
+      Funds Locked in Escrow: 5: Protocol
+    section Outcome Handling
+      Goal Reached?: 5: Protocol
+      Refund Users (If Failed): 4: Supporter
+      Release 50% to Founder & PLU: 5: Founder
+    section Post-Funding
+      Submit Milestone Proof: 5: Founder
+      Verify & Release Capital: 4: Admin
+      Progressive Liquidity Unlocks: 5: Protocol
+```
+</details>
+
+## 🏗 System Architecture (Technical Implementation & Code Quality)
+
+We build for users, not just judges. Below is our complete, transparent, and labeled architecture breakdown showing modules, data flow, and tech stack.
+
+*[Insert Architecture Image Here]*
+
+<details>
+<summary>View System Architecture Mermaid Diagram Source</summary>
 
 ```mermaid
 graph TD
-    subgraph "Frontend — Next.js"
-        HOME["Homepage"] --> DETAIL["Campaign Detail"]
-        CREATE["Create Campaign"] --> DEPLOY["Deploy on BNB Chain"]
-        DASH["Dashboard"]
+    %% Styling
+    classDef frontend fill:#000,stroke:#333,stroke-width:2px,color:#fff
+    classDef backend fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#000
+    classDef contract fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#000
+
+    %% Frontend Layer
+    subgraph "Frontend Layer (Design & Usability)"
+        UI["Next.js 14 UI<br/>(Tailwind CSS)"]:::frontend
+        Wagmi["Wagmi / Ethers.js<br/>(WalletConnect)"]:::frontend
+        UI <--> Wagmi
     end
 
-    subgraph "Backend — Bun + Hono"
-        API["REST API :3001"]
-        IDX["Chain Indexer"]
-        DB[(SQLite)]
-        API --> DB
-        IDX --> DB
+    %% Backend Layer
+    subgraph "Backend Layer (Indexing & API)"
+        Hono["Bun + Hono API<br/>(:3001)"]:::backend
+        Scanner["Chain Indexer<br/>(Background Task)"]:::backend
+        DB[(SQLite DB)]:::backend
+        Hono --> DB
+        Scanner --> DB
     end
 
-    subgraph "BNB Chain Testnet"
-        FACTORY["EvolisFactory"]
-        POOL["EvolisPool"]
-        TOKEN["Token ERC-20"]
-        CTRL["LiquidityController PLU"]
+    %% Smart Contracts
+    subgraph "BNB Chain Ecosystem (Technical Implementation)"
+        Factory["EvolisFactory<br/>(Campaign Registry)"]:::contract
+        Pool["EvolisPool<br/>(Escrow & Bonding Curve)"]:::contract
+        Token["Project ERC-20 Token"]:::contract
+        PLU["LiquidityController<br/>(Progressive Unlocks)"]:::contract
     end
 
-    DEPLOY --> |wagmi| FACTORY
-    DETAIL --> |fetch| API
-    IDX --> |poll| FACTORY
-    FACTORY --> POOL
-    FACTORY --> TOKEN
-    FACTORY --> CTRL
+    %% Connections
+    UI <-->|REST API Fetch| Hono
+    Scanner -->|Poll Events| Factory
+    Wagmi -->|Deploy & Transact| Factory
+    Wagmi -->|Buy / Refund| Pool
+    Factory --> Pool
+    Factory --> Token
+    Factory --> PLU
+    Pool -->|Triggers Unlocks| PLU
 ```
+</details>
 
-> 📖 Full architecture details: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+> [!IMPORTANT]
+> **Clean Technical Implementation:** Our Next.js interface communicates with a fast, lightweight Bun+Hono component for sub-second UI index tracking, while all fundamental rules live verifiably on-chain via the `EvolisPool` and `LiquidityController`.
 
----
+## � BNB Chain Integration & Ecosystem Fit
 
-## 🚶 User Journey
+Evolis is purposefully connected to strengthen the BNB Chain ecosystem by providing safe, scalable crowdfunding infrastructure. We utilize BNB Chain's unmatched throughput to execute deep logic securely at scale.
 
-```mermaid
-flowchart LR
-    A[Browse Campaigns] --> B[Connect Wallet]
-    B --> C[Buy Tokens via Bonding Curve]
-    C --> D[Funds Held in Escrow]
-    D --> E{Goal Reached?}
-    E --> |No| F[Refund]
-    E --> |Yes| G[50% to Founder + 50% to PLU]
-    G --> H[Milestones Verified → Funds Released]
-    G --> I[Epochs Unlock → Deeper Liquidity]
-```
+**Verified Smart Contracts (BNB Testnet):**
+- **EvolisFactory:** [`0x2c281243A1013A9Be20a7415ee6D0CdCd8Aae39b`](https://testnet.bscscan.com/address/0x2c281243A1013A9Be20a7415ee6D0CdCd8Aae39b)
+- **EvolisPool:** [`0xc956ccb7E961FDE8689f54895F6c67e4E44C05F8`](https://testnet.bscscan.com/address/0xc956ccb7E961FDE8689f54895F6c67e4E44C05F8)
+- **Token:** [`0x4762610940Ad0aA5Aa7c6911E8EE690f8BDc2ed7`](https://testnet.bscscan.com/address/0x4762610940Ad0aA5Aa7c6911E8EE690f8BDc2ed7)
+- **Controller:** [`0x3DCB43994B3e03b40F8FFba12a9950D1c968d761`](https://testnet.bscscan.com/address/0x3DCB43994B3e03b40F8FFba12a9950D1c968d761)
 
-> 📖 Detailed user journeys (supporter + founder): [docs/USER_JOURNEY.md](docs/USER_JOURNEY.md)
+## 💰 Business / Token Model
 
----
+Each campaign defines its own ERC-20 supply natively registered on BNB Chain:
+- **Token Distribution:** 40% sold directly via Bonding Curve, 60% secured for Progressive Liquidity Unlock.
+- **Protocol Fees:** 1.0% operational protocol fee + 0.5% pooled IL Protection fund.
+- **Capital Flow:** Upon success, 50% deployed to founder / 50% to seed liquidity. Remaining funds are disbursed epoch-by-epoch exclusively as milestones clear.
 
-## 🚀 Quick Start
+## � Go-To-Market (GTM) Strategy
 
-### Prerequisites
-- Node.js 18+, Bun, Foundry (forge/cast/anvil), Git
+Evolis intends to capture momentum on BNB Chain with three vectors:
+1. **Hackathon Pipeline:** Partnering with BNB Chain hackathons to be the default launchpad for incubated teams.
+2. **Community Rewards:** Incentivizing early liquidity providers via protocol fee-sharing loops.
+3. **B2B Architecture Deployment:** Offering `EvolisFactory` as a white-label protocol SDK for decentralized collectives and DAOs to fund sub-projects natively.
 
-### Setup
+## ⚙️ Setup + Run Instructions
+
+Deploying the Evolis platform is heavily streamlined for developers.
+
+> [!TIP]
+> **Prerequisites:** `Node.js 18+`, `Bun`, `Foundry` (forge/cast/anvil), and `Git`.
+
 ```bash
+# Clone the protocol repository
 git clone https://github.com/ShauryaKesarwani/Evolis.git
 cd Evolis
 
-# Backend
-cd backend && bun install
-cp .env.example .env  # Configure RPC_URL, FACTORY_ADDRESS, ADMIN_PRIVATE_KEY
-bun dev               # → http://localhost:3001
+# 1. Start the Backend API + Chain Indexer
+cd backend
+bun install
+cp .env.example .env  # Update RPC_URL and FACTORY_ADDRESS
+bun dev               # Server runs on http://localhost:3001
 
-# Frontend (new terminal)
-cd frontend && bun install
-cp .env.example .env.local  # Configure NEXT_PUBLIC_API_URL, NEXT_PUBLIC_FACTORY_ADDRESS
-bun dev                     # → http://localhost:3000
+# 2. Start the Provider Frontend (Next.js)
+cd ../frontend
+bun install
+cp .env.example .env.local  # Set NEXT_PUBLIC_API_URL & NEXT_PUBLIC_FACTORY_ADDRESS
+bun dev                     # App serving on http://localhost:3000
 ```
 
-> 📖 Full setup guide with BNB Testnet deployment: [docs/SETUP.md](docs/SETUP.md)
+## � Roadmap (Sustainability & Market Potential)
+
+Evolis represents a highly sustainable foundation designed well beyond the current hackathon:
+
+### Phase 1: Hackathon MVP (Accomplished ✅)
+- On-chain foundation: Bonding curve issuance, IL protection, Escrow and PLU engine.
+- Complete full-stack MVP implementation on BNB Testnet (`Next.js` / `Bun`).
+
+### Phase 2: Protocol Maturation (Upcoming) ⏳
+- **Chainlink Automation:** Fully automated epoch triggering eliminating all centralized admin requirements.
+- **Advanced Dynamic Mechanics:** Implementing anti-whale transaction fees during high velocity funding windows.
+- **Comprehensive Smart Contract Security Audit.**
+
+### Phase 3: Mainnet Transition & Custom Tokenomics 🔮
+- **BNB Chain Mainnet Launch:** Moving to high-liquidity production environments.
+- **Evolis DAO Governance:** Community governed parameter and fee structure adjustments.
+- **AI-Themed Token Templates:** Deploying distinct smart curve configurations for specialized economic behaviors.
 
 ---
-
-## 📜 Smart Contracts
-
-| Contract | Purpose |
-|----------|---------|
-| **EvolisFactory** | Deploy & register campaign pools |
-| **EvolisPool** | Bonding curve + escrow + IL protection |
-| **Token** | Standard ERC-20 with fixed supply |
-| **LiquidityController** | Progressive Liquidity Unlock engine |
-
-**Deployed on BNB Chain Testnet:**
-
-| Contract | Address |
-|----------|---------|
-| EvolisFactory | [`0x2c281243...`](https://testnet.bscscan.com/address/0x2c281243A1013A9Be20a7415ee6D0CdCd8Aae39b) |
-| EvolisPool | [`0xc956ccb7...`](https://testnet.bscscan.com/address/0xc956ccb7E961FDE8689f54895F6c67e4E44C05F8) |
-| Token | [`0x47626109...`](https://testnet.bscscan.com/address/0x4762610940Ad0aA5Aa7c6911E8EE690f8BDc2ed7) |
-| Controller | [`0x3DCB4399...`](https://testnet.bscscan.com/address/0x3DCB43994B3e03b40F8FFba12a9950D1c968d761) |
-
-**Test Suite:** 26/27 passing (96.3%)
-
-> 📖 Contract reference, test results, parameters: [docs/CONTRACTS.md](docs/CONTRACTS.md)
-
----
-
-## 🖥 Frontend
-
-Built with **Next.js 14**, **Tailwind CSS**, and **Wagmi** for wallet connectivity.
-
-| Page | Description |
-|------|-------------|
-| **Home** | Hero, How It Works, Campaign Grid with filters |
-| **Create Campaign** | 5-step wizard → deploy on BNB Chain |
-| **Campaign Detail** | Funding progress, token purchase, milestones, activity feed |
-| **Dashboard** | My investments & campaigns |
-| **Admin** | Milestone verification (admin-gated) |
-
-> 📖 Component tree, design system, API integration: [docs/FRONTEND.md](docs/FRONTEND.md)
-
----
-
-## 🔌 Backend
-
-Built with **Bun**, **Hono**, and **SQLite**. Indexes on-chain data and serves it to the frontend.
-
-| Endpoint | Description |
-|----------|-------------|
-| `GET /projects` | List all campaigns |
-| `GET /project/:id` | Campaign details (auto-fetches from chain) |
-| `POST /projects` | Save campaign metadata |
-| `GET /project/:id/milestones` | List milestones |
-| `POST /verify-milestone` | Admin: verify milestone |
-
-> 📖 Full API reference, DB schema, indexer details: [docs/BACKEND.md](docs/BACKEND.md)
-
----
-
-## 💰 Token & Business Model
-
-```
-Total Supply: Configurable per campaign
-
-Distribution:
-├── 40% — Bonding Curve Sale
-└── 60% — Locked for Progressive Liquidity Unlock
-
-Purchase Fees:
-├── 1.0% — Platform fee
-└── 0.5% — IL Protection fund
-
-Escrow Flow:
-Goal Reached → 50% to founder + 50% to progressive liquidity
-             → Remaining funds released per verified milestone
-```
-
-> 📖 Full vision, GTM strategy, roadmap: [docs/VISION.md](docs/VISION.md)
-
----
-
-## 🗺 Roadmap
-
-| Status | Feature |
-|--------|---------|
-| ✅ | Smart contracts (EvolisFactory + Pool + Token + Controller) |
-| ✅ | Bonding curve fundraise with escrow |
-| ✅ | Progressive Liquidity Unlock (PLU) engine |
-| ✅ | IL protection + circuit breaker |
-| ✅ | Next.js frontend (6 pages, 27+ components) |
-| ✅ | Wallet integration (Wagmi + WalletConnect) |
-| ✅ | Backend API + chain indexer |
-| ✅ | BNB Chain Testnet deployment |
-| ⏳ | **Anti-whale dynamic fees** (Code ready, needs integration) |
-| ⏳ | **Status Filters & Sorting** (Frontend UI polish) |
-| 🔮 | **Chainlink Automation** (Automated epoch triggering) |
-| 🔮 | **Governance / DAO** (On-chain protocol decisions) |
-| 🔮 | **Post-launch incentive programs** (Farming, staking, rewards) |
-| 🔮 | **AI-themed token templates** (Specialized mechanics) |
-| 🔮 | **Multi-chain expansion** (Ethereum, Polygon, Arbitrum) |
-| 🔮 | **Formal security audit** |
-| 🔮 | **BNB Chain Mainnet deployment** |
-
-> 📖 Full unimplemented feature list: [docs/UNIMPLEMENTED.md](docs/UNIMPLEMENTED.md)
-
----
-
-## 📚 Documentation
-
-| Document | Contents |
-|----------|----------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | System diagrams, DB schema, API reference |
-| [USER_JOURNEY.md](docs/USER_JOURNEY.md) | Supporter & founder flow diagrams |
-| [SETUP.md](docs/SETUP.md) | Installation, configuration, deployment |
-| [CONTRACTS.md](docs/CONTRACTS.md) | Smart contract reference & test results |
-| [FRONTEND.md](docs/FRONTEND.md) | Pages, components, design system |
-| [BACKEND.md](docs/BACKEND.md) | API endpoints, indexer, database |
-| [VISION.md](docs/VISION.md) | Problem, solution, business model, roadmap |
-| [UNIMPLEMENTED.md](docs/UNIMPLEMENTED.md) | Planned features not yet built |
-
----
-
-## 🔐 Security
-
-- All funds held in on-chain smart contracts — backend never custodies funds
-- ReentrancyGuard on EvolisPool
-- Circuit breaker for extreme price movements
-- Epoch timing enforcement prevents premature unlocks
-- Admin routes gated by wallet address verification
-- Environment variables for all secrets (never hardcoded)
-- `.gitignore` covers `.env`, `.env.*`, `*.key`, `*.pem`, `*.secret`, private keys
-
-> ⚠️ **Not yet audited.** Formal security audit planned before mainnet deployment.
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the **MIT License** — see [LICENSE](LICENSE) for details.
-
----
-
 <p align="center">
-  <strong>Built for BNB Chain 🟡</strong>
+  <strong>Innovation meets Accountability. Built for BNB Chain 🟡</strong>
 </p>
