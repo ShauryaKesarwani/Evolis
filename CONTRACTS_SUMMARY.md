@@ -6,6 +6,8 @@ Libraries: OpenZeppelin
 
 ---
 
+## 🟢 Currently Implemented Contracts
+
 # 1️⃣ TokenFactory
 
 ## Purpose
@@ -131,7 +133,7 @@ LiquidityUnlocked(uint256 indexed epoch, uint256 tokenAmount, uint256 bnbAmount,
 
 ---
 
-# 🔹 AMM Liquidity Plan
+# 🔹 AMM Liquidity Plan (Current Implementation)
 
 At deployment via deployTokenV2:
 
@@ -144,19 +146,161 @@ x * y = k
 
 ---
 
+## 🟡 Planned Future Contracts (Not Yet Implemented)
+
+The following milestone-gated escrow system and project factory tracking are described in the project vision and planned for future development to complete the architecture.
+
+# 4️⃣ ProjectFactory
+
+## Purpose
+Deploy and track projects, potentially integrating with TokenFactory for the token/PLU layer and deploying the MilestoneEscrow.
+
+## Struct Example
+
+struct ProjectMeta {
+    address token;
+    address escrow;
+    address creator;
+    uint256 fundingGoal;
+    uint256 deadline;
+    bool goalReached;
+    bool finalized;
+}
+
+## Planned Functions
+
+createProject(
+    string name,
+    string symbol,
+    uint256 totalSupply,
+    uint256 fundingGoal,
+    uint256 deadline,
+    Milestone[] milestones
+)
+
+getProject(uint256 id)
+
+## Emits
+
+ProjectCreated(
+    uint256 projectId,
+    address token,
+    address escrow
+)
+
+---
+
+# 5️⃣ MilestoneEscrow
+
+## Purpose
+Manage contribution tracking, refund logic, milestone verification, and fund release.
+
+## Planned State
+
+address public token;
+address public creator;
+uint256 public fundingGoal;
+uint256 public totalRaised;
+uint256 public deadline;
+bool public goalReached;
+bool public refundsEnabled;
+
+mapping(address => uint256) public contributions;
+
+struct Milestone {
+    string description;
+    uint256 unlockAmount;
+    bool verified;
+    bool fundsReleased;
+}
+
+Milestone[] public milestones;
+uint256 public currentMilestone;
+
+---
+
+# 🔹 Contribute()
+
+Requirements:
+- block.timestamp < deadline
+- funding not finalized
+
+Logic:
+- contributions[msg.sender] += msg.value
+- totalRaised += msg.value
+- transfer tokens proportional to fixed price
+- if totalRaised >= fundingGoal:
+    goalReached = true
+
+---
+
+# 🔹 Finalize()
+
+If deadline passed:
+
+If totalRaised < fundingGoal:
+    refundsEnabled = true
+
+Else:
+    goalReached = true
+
+---
+
+# 🔹 Refund()
+
+Requirements:
+- refundsEnabled == true
+- contributions[msg.sender] > 0
+
+Logic:
+- return BNB
+- reset contribution
+
+---
+
+# 🔹 Verify Milestone()
+
+Only backend/admin wallet.
+
+Sets:
+- milestone.verified = true
+
+---
+
+# 🔹 Release Milestone Funds()
+
+Requirements:
+- milestone verified
+- not already released
+
+Logic:
+- transfer unlockAmount to creator
+- mark released
+- increment currentMilestone
+
+---
+
+# 🔹 AMM Liquidity Plan (Post-Milestone Goal)
+
+After goalReached:
+
+Creator calls (or integration with TokenFactory/PLU handles this):
+- approve(router)
+- addLiquidity(token, BNB)
+
+Liquidity created on PancakeSwap.
+
+Price determined by:
+x * y = k
+
+---
+
 # 🔐 Security Considerations
 
 - Owner/deployer gating on initialize and manualAddLiquidity
 - Epoch timing enforcement (cannot unlock before epoch passes)
 - Token transfer validation during deployment
 - Input validation on all config parameters
-
----
-
-# ⚠️ Note: MilestoneEscrow Not Yet Implemented
-
-The milestone-gated escrow system (contribute, refund, verifyMilestone, releaseMilestoneFunds) described in the project vision has NOT been implemented as a contract yet. The current contracts implement the token deployment and PLU (Progressive Liquidity Unlock) layer only.
-
-The following contracts are still needed to complete the architecture:
-- **MilestoneEscrow**: contribution tracking, refund logic, milestone verification, fund release
-- Modifications to **TokenFactory** to also deploy an escrow alongside token + controller
+- (Future) ReentrancyGuard on refund
+- (Future) Checks-Effects-Interactions pattern for escrow
+- (Future) Deadline enforcement for milestones

@@ -237,10 +237,42 @@ export default function DashboardPage() {
   const [isFounderMode, setIsFounderMode] = useState(false); // Toggle for mock states
   const { address, isConnected } = useAccount();
   const [mounted, setMounted] = useState(false);
+  
+  const [fetchedCampaigns, setFetchedCampaigns] = useState<CreatedCampaign[]>([]);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted && isConnected && address) {
+      const fetchProjects = async () => {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+          const res = await fetch(`${apiUrl}/projects`);
+          const data = await res.json();
+          const projects = data.projects || [];
+          
+          const myCampaigns = projects
+            .filter((p: any) => p.creator?.toLowerCase() === address.toLowerCase())
+            .map((p: any) => ({
+              id: String(p.id),
+              projectName: `Project #${p.id}`,
+              goalBNB: Number(p.funding_goal || 0) / 1e18,
+              raisedBNB: Number(p.total_raised || 0) / 1e18,
+              currentPhase: p.status || 'Active',
+              milestoneReady: false // Would require fetching milestones
+            }));
+            
+          setFetchedCampaigns(myCampaigns);
+        } catch (e) {
+          console.error("Failed to fetch dashboard campaigns", e);
+        }
+      };
+      
+      fetchProjects();
+    }
+  }, [mounted, isConnected, address]);
 
   const displayAddress = mounted && isConnected && address 
     ? `${address.slice(0, 6)}...${address.slice(-4)}` 
@@ -258,7 +290,7 @@ export default function DashboardPage() {
             onChange={(e) => setIsFounderMode(e.target.checked)}
             className="accent-[#111111] w-4 h-4 cursor-pointer"
           />
-          Show Founder View (Populated)
+          Show Mock Data (Populated)
         </label>
       </div>
 
@@ -282,7 +314,7 @@ export default function DashboardPage() {
           )}
           
           {activeTab === 'My Campaigns' && (
-            <FounderCampaignsGrid campaigns={isFounderMode ? mockCreatedCampaigns : []} />
+            <FounderCampaignsGrid campaigns={isFounderMode ? mockCreatedCampaigns : fetchedCampaigns} />
           )}
 
           {activeTab === 'Token Portfolio' && (

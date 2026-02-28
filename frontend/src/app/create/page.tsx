@@ -1,7 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useWriteContract } from 'wagmi';
+import { parseEther } from 'viem';
+import { factoryAbi } from '@/chain/abis';
 import CreateCampaignLayout from '@/components/create-campaign/CreateCampaignLayout';
 import StepIndicator from '@/components/create-campaign/StepIndicator';
 import StepProjectInfo from '@/components/create-campaign/StepProjectInfo';
@@ -49,15 +51,51 @@ export default function CreateCampaignPage() {
     }
   };
 
-  const handleDeploy = () => {
-    console.log('Deploying with data:', data);
-    alert('Mock Deploy: Smart Contracts would be deployed here!');
+  const { writeContractAsync } = useWriteContract();
+
+  const handleDeploy = async () => {
+    try {
+      if (!process.env.NEXT_PUBLIC_FACTORY_ADDRESS) {
+        alert("Factory address not configured.");
+        return;
+      }
+      
+      const totalSupplyWei = BigInt(data.totalSupply) * 10n**18n;
+      const initialLiquidityPercent = 50n; // default
+      const unlockDuration = BigInt(data.deadlineDays) * 24n * 60n * 60n;
+      const epochDuration = 24n * 60n * 60n;
+      const router = '0x10ED43C718714eb63d5aA57B78B54704E256024E'; // PancakeSwap Mainnet router / Default
+
+      const txHash = await writeContractAsync({
+        abi: factoryAbi,
+        address: process.env.NEXT_PUBLIC_FACTORY_ADDRESS as `0x${string}`,
+        functionName: 'deployTokenV2',
+        args: [{
+          name: data.tokenName,
+          symbol: data.symbol,
+          totalSupply: totalSupplyWei,
+          initialLiquidityPercent,
+          unlockDuration,
+          epochDuration,
+          router
+        }],
+        value: parseEther(data.fundingGoal.toString())
+      });
+      
+      console.log('Deployed Tx:', txHash);
+      alert(`Campaign deployed successfully! Transaction Hash: ${txHash}`);
+      // In a real app we would wait for confirmation, then route to the newly created campaign page
+      
+    } catch (error) {
+      console.error('Deployment failed:', error);
+      alert('Deployment failed. See console for details.');
+    }
   };
 
   const handleConnectWallet = () => {
     // This is handled by the global connect wallet modal via Navbar, 
     // or we can prompt them to click the navbar button
-    alert('Please click "Connect Wallet" in the Navigation Bar to connect.');
+    alert('Please click "Connect Wallet" in the Navigation Bar to sign transactions or connect your wallet.');
   };
 
   return (

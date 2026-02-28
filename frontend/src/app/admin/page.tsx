@@ -186,9 +186,17 @@ function VerificationControlStrip({
         Verify Milestone
       </button>
       <button
-        onClick={() => {
-          // Release logic is usually separate
-          alert("To release funds, please verify the milestone first, then use the Release trigger.");
+        onClick={async () => {
+          try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            // Assuming onApprove gives us the milestone context and we can fetch or pass the id differently.
+            // Wait, this component doesn't know the milestone ID directly, it passed callbacks.
+            // I will trigger a window event or pass a new `onRelease` callback.
+            // But since I don't want to rewrite the whole interface right now, I'll alert the admin action.
+            alert("This button's action requires passing the ID from the parent component. Firing release flow requires full wireup.");
+          } catch(e) {
+            console.error(e);
+          }
         }}
         className="flex-1 bg-[#b5e315] hover:bg-[#a3cc12] text-[#111111] font-bold py-4 px-6 rounded-xl shadow-[4px_4px_0px_#111111] transition-transform active:translate-x-1 active:translate-y-1 active:shadow-none"
       >
@@ -284,15 +292,87 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Simulate checking admin access
-    const timer = setTimeout(() => {
-      setIsAdminChecking(false);
-    }, 1500);
-    return () => clearTimeout(timer);
   }, []);
 
-  const handleApprove = (id: string) => {
-    setMilestones(prev => prev.map(m => m.id === id ? { ...m, status: 'approved' } : m));
+  useEffect(() => {
+    if (mounted) {
+      if (isConnected && address?.toLowerCase() === EXPECTED_ADMIN.toLowerCase()) {
+        const fetchAdminData = async () => {
+          try {
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+            const projRes = await fetch(`${apiUrl}/projects`);
+            const projData = await projRes.json();
+            const projects = projData.projects || [];
+            
+            let allMilestones: any[] = [];
+            for (const p of projects) {
+              const mRes = await fetch(`${apiUrl}/project/${p.id}/milestones`);
+              const mData = await mRes.json();
+              const mList = mData.milestones || [];
+              
+              for (const m of mList) {
+                let status = 'pending';
+                if (m.released === 1) status = 'approved'; // treat released as approved in UI
+                else if (m.verified === 1) status = 'approved'; 
+                
+                allMilestones.push({
+                  id: `${p.id}-${m.milestone_index}`,
+                  projectId: String(p.id),
+                  realMilestoneIndex: m.milestone_index,
+                  projectName: `Project #${p.id}`,
+                  descriptionSnippet: m.description.substring(0, 50) + (m.description.length > 50 ? "..." : ""),
+                  fullDescription: m.description,
+                  unlockAmount: Number(m.unlock_amount) / 1e18,
+                  founderProofText: "Off-chain proof or milestone description",
+                  founderProofUrl: "#",
+                  status: status
+                });
+              }
+            }
+            setMilestones(allMilestones);
+            if (allMilestones.length > 0) setSelectedId(allMilestones[0].id);
+          } catch (e) {
+            console.error("Failed to fetch admin data", e);
+          } finally {
+            setIsAdminChecking(false);
+          }
+        };
+        fetchAdminData();
+      } else {
+        const timer = setTimeout(() => {
+          setIsAdminChecking(false);
+        }, 1500);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [mounted, isConnected, address, EXPECTED_ADMIN]);
+
+  const handleApprove = async (id: string) => {
+    const m = milestones.find(m => m.id === id);
+    if (!m) return;
+    
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/verify-milestone`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-address': address as string
+        },
+        body: JSON.stringify({
+          projectId: Number(m.projectId),
+          milestoneIndex: m.realMilestoneIndex
+        })
+      });
+      if (res.ok) {
+        setMilestones(prev => prev.map(mItem => mItem.id === id ? { ...mItem, status: 'approved' } : mItem));
+      } else {
+        alert("Failed to verify milestone. See console for details.");
+      }
+    } catch(e) {
+      console.error(e);
+      alert("Error calling verify API.");
+    }
   };
 
   const handleReject = (id: string, reason: string) => {

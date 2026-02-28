@@ -1,74 +1,64 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import CampaignCard from "./CampaignCard";
 
+interface ProjectRow {
+  id: number;
+  token_address: string | null;
+  escrow_address: string | null;
+  creator: string | null;
+  funding_goal: string | null;
+  total_raised: string | null;
+  deadline: number | null;
+  status: string | null;
+}
+
 export default function CampaignGrid() {
-  const dummyCampaigns = [
-    {
-      id: "1",
-      name: "ZenCrypto Wallet",
-      category: "Infra",
-      status: "Funding",
-      milestoneStr: "1 / 4 Unlocked",
-      raised: "35,450",
-      target: "50,000",
-      price: "0.05",
-      progressPercent: 71,
-    },
-    {
-      id: "2",
-      name: "Nebula Protocol",
-      category: "DeFi",
-      status: "Funding",
-      milestoneStr: "0 / 3 Pending",
-      raised: "12,000",
-      target: "100,000",
-      price: "0.10",
-      progressPercent: 12,
-    },
-    {
-      id: "3",
-      name: "Lumina DEX",
-      category: "DeFi",
-      status: "Verified",
-      milestoneStr: "5 / 5 Unlocked",
-      raised: "250,000",
-      target: "250,000",
-      price: "0.25",
-      progressPercent: 100,
-    },
-    {
-      id: "4",
-      name: "Aether Gaming",
-      category: "Gaming",
-      status: "Funding",
-      milestoneStr: "2 / 5 Unlocked",
-      raised: "85,200",
-      target: "150,000",
-      price: "0.15",
-      progressPercent: 56,
-    },
-    {
-      id: "5",
-      name: "Echo Storage",
-      category: "Infra",
-      status: "Upcoming",
-      milestoneStr: "TGE Pending",
-      raised: "0",
-      target: "75,000",
-      price: "0.08",
-      progressPercent: 0,
-    },
-    {
-      id: "6",
-      name: "Chronos DAO",
-      category: "Social",
-      status: "Funding",
-      milestoneStr: "1 / 6 Unlocked",
-      raised: "115,000",
-      target: "125,000",
-      price: "0.50",
-      progressPercent: 92,
-    },
-  ];
+  const [campaigns, setCampaigns] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchProjects() {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/projects`);
+        const data = await res.json();
+        
+        const mapped = (data.projects || []).map((p: ProjectRow) => {
+          const raisedNum = Number(p.total_raised || 0) / 1e18;
+          const targetNum = Number(p.funding_goal || 0) / 1e18;
+          const progressPercent = targetNum > 0 ? Math.min(100, Math.floor((raisedNum / targetNum) * 100)) : 0;
+          
+          return {
+            id: String(p.id),
+            name: `Project #${p.id}`,
+            category: "DeFi",
+            status: p.status || "Funding",
+            milestoneStr: "View Details",
+            raised: raisedNum.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+            target: targetNum.toLocaleString(undefined, { maximumFractionDigits: 4 }),
+            price: "-",
+            progressPercent,
+          };
+        });
+        
+        setCampaigns(mapped);
+      } catch (err) {
+        console.error("Failed to fetch projects", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchProjects();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-24 px-6 bg-[#FCFAF6] min-h-[600px] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#111111]/20 border-t-[#b5e315] rounded-full animate-spin"></div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-24 px-6 bg-[#FCFAF6]">
@@ -78,23 +68,31 @@ export default function CampaignGrid() {
             Active Campaigns.
           </h2>
           <span className="hidden md:inline-block text-sm font-sans font-semibold text-[#111111]/50 uppercase tracking-widest border border-[#111111]/20 rounded-full px-4 py-1">
-            Displaying {dummyCampaigns.length} Projects
+            Displaying {campaigns.length} Projects
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dummyCampaigns.map((campaign) => (
-            <div key={campaign.id} className="h-auto aspect-[4/5] sm:aspect-auto sm:h-[420px]">
-              <CampaignCard {...campaign} />
-            </div>
-          ))}
-        </div>
+        {campaigns.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {campaigns.map((campaign) => (
+              <div key={campaign.id} className="h-auto aspect-[4/5] sm:aspect-auto sm:h-[420px]">
+                <CampaignCard {...campaign} />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 border-2 border-dashed border-[#111111]/10 rounded-3xl">
+            <p className="text-[#111111]/50 font-mono">No active campaigns found.</p>
+          </div>
+        )}
         
-        <div className="mt-16 flex justify-center">
-          <button className="px-8 py-4 rounded-full bg-white text-[#111111] font-bold text-center border-2 border-[#111111]/10 hover:border-[#111111] shadow-sm hover:-translate-y-1 transition-all duration-200">
-            Load More Projects
-          </button>
-        </div>
+        {campaigns.length > 0 && (
+          <div className="mt-16 flex justify-center">
+            <button className="px-8 py-4 rounded-full bg-white text-[#111111] font-bold text-center border-2 border-[#111111]/10 hover:border-[#111111] shadow-sm hover:-translate-y-1 transition-all duration-200">
+              Load More Projects
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

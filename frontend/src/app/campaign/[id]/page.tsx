@@ -11,29 +11,54 @@ import FounderActionStrip from '@/components/campaign/FounderActionStrip';
 
 export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  // Mock State Data
-  const isOwner = true; // Toggle to false to see supporter view
   const campaignId = id || "123";
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-  const mockCampaign = {
-    name: "zkBNB Identity Protocol",
-    tagline: "Privacy-preserving KYC and verifiable credentials secured by zero-knowledge proofs on the BNB Chain. Backed by Binance Labs.",
-    status: 'Active' as const,
-    amountRaised: 3850,
-    fundingGoal: 5000,
-    daysRemaining: 14,
+  let projectData: any = null;
+  let milestonesData: any[] = [];
+  let contributorsData: any[] = [];
+
+  try {
+    const [projRes, mileRes, contRes] = await Promise.all([
+      fetch(`${apiUrl}/project/${campaignId}`, { next: { revalidate: 0 } }),
+      fetch(`${apiUrl}/project/${campaignId}/milestones`, { next: { revalidate: 0 } }),
+      fetch(`${apiUrl}/project/${campaignId}/contributors`, { next: { revalidate: 0 } })
+    ]);
+    
+    if (projRes.ok) projectData = (await projRes.json()).project;
+    if (mileRes.ok) milestonesData = (await mileRes.json()).milestones || [];
+    if (contRes.ok) contributorsData = (await contRes.json()).contributors || [];
+  } catch (e) {
+    console.error("Failed to fetch project details", e);
+  }
+
+  const isOwner = false; // We'll let TokenPurchasePanel or a client component handle address-based checks if needed, but for FounderActionStrip we pass creatorAddress
+  const creatorAddress = projectData?.creator || "0x98154Db8A53BB5B79BfcA75fAEeAC988B3b11891";
+
+  const raisedNum = projectData ? Number(projectData.total_raised || 0) / 1e18 : 0;
+  const targetNum = projectData ? Number(projectData.funding_goal || 0) / 1e18 : 5000;
+  const daysRemaining = projectData?.deadline 
+    ? Math.max(0, Math.ceil((projectData.deadline * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))
+    : 14;
+
+  const campaign = {
+    name: projectData ? `Project #${projectData.id}` : "zkBNB Identity Protocol",
+    tagline: "A decentralized milestone-based funding project built on BNB Chain.",
+    status: (projectData?.status || 'Active') as any,
+    amountRaised: raisedNum,
+    fundingGoal: targetNum,
+    daysRemaining,
     description: "The zkBNB Identity Protocol is the foundational privacy layer for the BNB ecosystem. By utilizing advanced zero-knowledge rollups, we allow users to prove their identity, compliance status, and on-chain history without revealing their actual data.\n\nIncubated during the Binance Labs Season 7 Incubation Program, our technology is already being integrated into major BNB Chain DeFi protocols.\n\nFunds from this milestone campaign will be used to finalize the mainnet smart contracts, complete our tier-1 security audits, and subsidize gas for the first 100,000 user identity mints.",
     team: [
-      { name: "Alexei Petrov", role: "Founder (Ex-Binance Security)" },
-      { name: "Dr. Maya Lin", role: "Cryptography Lead" }
+      { name: "Creator", role: creatorAddress }
     ],
-    tokensDistributed: 770000,
-    supporterCount: 894,
+    tokensDistributed: raisedNum * 100,
+    supporterCount: contributorsData.length,
   };
 
-  const mockToken = {
-    name: "ZK Identity Token",
-    symbol: "ZKID",
+  const token = {
+    name: projectData?.token_address ? `Token ${projectData.token_address.slice(0, 6)}` : "ZKID",
+    symbol: "TKN",
     priceBNB: 0.005,
     totalSupply: 1000000000,
     allocations: [
@@ -41,86 +66,77 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
       { label: "Community Treasury", percentage: 35, color: "#111111" },
       { label: "Core Team", percentage: 25, color: "#FCFAF6" }
     ],
-    userBalanceBNB: 12.5 // Mock user balance
+    userBalanceBNB: 0
   };
 
-  const mockMilestones: Milestone[] = [
-    {
-      id: 1,
-      description: "Testnet deployment on BNB Smart Chain and initial integration with PancakeSwap for compliance checking.",
-      unlockAmountBNB: 1000,
-      status: 'Released'
-    },
-    {
-      id: 2,
-      description: "Successful completion of comprehensive security audits by CertiK and Zellic.",
-      unlockAmountBNB: 1500,
-      status: 'Verified'
-    },
-    {
-      id: 3,
-      description: "Mainnet Beta Launch. Enable live zero-knowledge profile generation for whitelisted addresses.",
-      unlockAmountBNB: 1250,
-      status: 'Submitted'
-    },
-    {
-      id: 4,
-      description: "Public Mainnet Launch. Scale verifier nodes and initiate gas-subsidy program for retail users.",
-      unlockAmountBNB: 1250,
-      status: 'Pending'
-    }
+  const mappedMilestones: Milestone[] = milestonesData.map((m: any) => {
+    let status = 'Pending';
+    if (m.released === 1) status = 'Released';
+    else if (m.verified === 1) status = 'Verified';
+    else if (m.description.includes('Submitted')) status = 'Submitted';
+
+    return {
+      id: m.id,
+      description: m.description,
+      unlockAmountBNB: Number(m.unlock_amount) / 1e18,
+      status: status as any
+    };
+  });
+
+  const displayMilestones = mappedMilestones.length > 0 ? mappedMilestones : [
+    { id: 1, description: "Initial Deployment", unlockAmountBNB: targetNum * 0.2, status: 'Pending' as const }
   ];
 
-  const mockActivities = [
-    { id: 1, type: 'purchase' as const, message: "wallet...1bA9 purchased 50,000 ZKID", timestamp: "10 mins ago" },
-    { id: 2, type: 'milestone' as const, message: "Milestone 2 Verified by Admin", timestamp: "2 hours ago" },
-    { id: 3, type: 'purchase' as const, message: "wallet...8cC2 purchased 125,000 ZKID", timestamp: "5 hours ago" },
-    { id: 4, type: 'purchase' as const, message: "wallet...3xY7 purchased 10,000 ZKID", timestamp: "1 day ago" }
-  ];
+  const activities = contributorsData.map((c: any, index: number) => ({
+    id: index,
+    type: 'purchase' as const,
+    message: `${c.contributor.slice(0, 6)}...${c.contributor.slice(-4)} contributed`,
+    timestamp: "Recently"
+  }));
 
   return (
     <>
-      <FounderActionStrip campaignId={campaignId} creatorAddress="0x98154Db8A53BB5B79BfcA75fAEeAC988B3b11891" />
+      <FounderActionStrip campaignId={campaignId} creatorAddress={creatorAddress} />
       
       <CampaignDetailLayout
         sidebar={
           <TokenPurchasePanel 
-            tokenSymbol={mockToken.symbol}
-            tokenPriceBNB={mockToken.priceBNB}
+            tokenSymbol={token.symbol}
+            tokenPriceBNB={token.priceBNB}
           />
         }
       >
         <CampaignHeader 
-          name={mockCampaign.name}
-          tagline={mockCampaign.tagline}
-          status={mockCampaign.status}
+          name={campaign.name}
+          tagline={campaign.tagline}
+          status={campaign.status}
         />
         
         <FundingProgress 
-          amountRaised={mockCampaign.amountRaised}
-          fundingGoal={mockCampaign.fundingGoal}
-          daysRemaining={mockCampaign.daysRemaining}
+          amountRaised={campaign.amountRaised}
+          fundingGoal={campaign.fundingGoal}
+          daysRemaining={campaign.daysRemaining}
         />
         
         <TokenInfoPanel 
-          name={mockToken.name}
-          symbol={mockToken.symbol}
-          priceBNB={mockToken.priceBNB}
-          totalSupply={mockToken.totalSupply}
-          allocations={mockToken.allocations}
+          name={token.name}
+          symbol={token.symbol}
+          priceBNB={token.priceBNB}
+          totalSupply={token.totalSupply}
+          allocations={token.allocations}
         />
         
-        <MilestoneTracker milestones={mockMilestones} />
+        <MilestoneTracker milestones={displayMilestones} />
         
         <ProjectDescription 
-          description={mockCampaign.description}
-          team={mockCampaign.team}
+          description={campaign.description}
+          team={campaign.team}
         />
         
         <ActivityFeed 
-          supporterCount={mockCampaign.supporterCount}
-          tokensDistributed={mockCampaign.tokensDistributed}
-          activities={mockActivities}
+          supporterCount={campaign.supporterCount}
+          tokensDistributed={campaign.tokensDistributed}
+          activities={activities}
         />
       </CampaignDetailLayout>
     </>
