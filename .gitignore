@@ -79,7 +79,7 @@ coverage.json
 # =========================
 # FOUNDRY
 # =========================
-lib/
+
 broadcast/
 cache/
 out/
