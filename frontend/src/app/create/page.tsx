@@ -15,22 +15,168 @@ import StepMilestones from '@/components/create-campaign/StepMilestones';
 import StepReviewDeploy from '@/components/create-campaign/StepReviewDeploy';
 import { CampaignData, initialCampaignData } from '@/components/create-campaign/types';
 
-const TEST_DATA: CampaignData = {
-  name: 'Echo Test Project',
-  tagline: 'A revolutionized way to test decentralized applications quickly and automatically.',
-  logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=ECHO',
-  websiteUrl: 'https://echo-testing.dev',
-  tokenName: 'Echo Test Token',
-  symbol: 'ECHO',
-  totalSupply: 10000000,
-  publicSalePercentage: 50,
-  teamPercentage: 20,
-  treasuryPercentage: 30,
-  fundingGoal: 10,
-  deadlineDays: 45,
-  unlockDurationDays: 30,
-  epochDurationDays: 1,
-};
+const TEST_DATA_OPTIONS: CampaignData[] = [
+  {
+    name: 'Echo Test Project',
+    tagline: 'A revolutionized way to test decentralized applications quickly and automatically.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=ECHO',
+    websiteUrl: 'https://echo-testing.dev',
+    tokenName: 'Echo Test Token',
+    symbol: 'ECHO',
+    totalSupply: 1000000000,
+    publicSalePercentage: 50,
+    teamPercentage: 20,
+    treasuryPercentage: 30,
+    fundingGoal: 1000,
+    deadlineDays: 45,
+    unlockDurationDays: 30,
+    epochDurationDays: 1,
+  },
+  {
+    name: 'Nebula Gaming',
+    tagline: 'The next generation Web3 gaming platform with sustainable tokenomics.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=NBG',
+    websiteUrl: 'https://nebula-gaming.io',
+    tokenName: 'Nebula Gold',
+    symbol: 'NBG',
+    totalSupply: 10000000000,
+    publicSalePercentage: 40,
+    teamPercentage: 25,
+    treasuryPercentage: 35,
+    fundingGoal: 2500,
+    deadlineDays: 60,
+    unlockDurationDays: 90,
+    epochDurationDays: 7,
+  },
+  {
+    name: 'GreenEarth Defi',
+    tagline: 'Regenerative finance protocol empowering carbon offset projects worldwide.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=GED',
+    websiteUrl: 'https://greenearth.finance',
+    tokenName: 'Earth Token',
+    symbol: 'EARTH',
+    totalSupply: 100000000,
+    publicSalePercentage: 30,
+    teamPercentage: 15,
+    treasuryPercentage: 55,
+    fundingGoal: 5000,
+    deadlineDays: 30,
+    unlockDurationDays: 180,
+    epochDurationDays: 14,
+  },
+  {
+    name: 'Quantum Oracle',
+    tagline: 'Lightning-fast decentralized data feeds for the BNB chain ecosystem.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=QO',
+    websiteUrl: 'https://quantum-oracle.network',
+    tokenName: 'Quantum Node',
+    symbol: 'QN',
+    totalSupply: 1000000000,
+    publicSalePercentage: 60,
+    teamPercentage: 20,
+    treasuryPercentage: 20,
+    fundingGoal: 1500,
+    deadlineDays: 14,
+    unlockDurationDays: 60,
+    epochDurationDays: 3,
+  },
+  {
+    name: 'Liquid Staked Yield',
+    tagline: 'Maximize your staking returns with our automated yield compounding protocol.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=LSY',
+    websiteUrl: 'https://lsy.finance',
+    tokenName: 'Yield Token',
+    symbol: 'YLD',
+    totalSupply: 1000000000,
+    publicSalePercentage: 45,
+    teamPercentage: 15,
+    treasuryPercentage: 40,
+    fundingGoal: 2000,
+    deadlineDays: 21,
+    unlockDurationDays: 120,
+    epochDurationDays: 7,
+  },
+  {
+    name: 'ArtBlock NFT Marketplace',
+    tagline: 'The premier destination for generative art and digital collectibles on BNB.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=ART',
+    websiteUrl: 'https://artblock.market',
+    tokenName: 'ArtBlock Coin',
+    symbol: 'ARTB',
+    totalSupply: 3000000000,
+    publicSalePercentage: 35,
+    teamPercentage: 20,
+    treasuryPercentage: 45,
+    fundingGoal: 500,
+    deadlineDays: 30,
+    unlockDurationDays: 365,
+    epochDurationDays: 30,
+  },
+  {
+    name: 'DeSci Innovation Lab',
+    tagline: 'Funding breakthrough scientific research through decentralized communities.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=LAB',
+    websiteUrl: 'https://desci-lab.org',
+    tokenName: 'Science Token',
+    symbol: 'SCI',
+    totalSupply: 21000000,
+    publicSalePercentage: 70,
+    teamPercentage: 10,
+    treasuryPercentage: 20,
+    fundingGoal: 10000,
+    deadlineDays: 90,
+    unlockDurationDays: 730,
+    epochDurationDays: 90,
+  },
+  {
+    name: 'Metaverse Real Estate',
+    tagline: 'Fractional ownership of premium virtual land across multiple metaverses.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=MRE',
+    websiteUrl: 'https://meta-estate.io',
+    tokenName: 'Meta Land',
+    symbol: 'LAND',
+    totalSupply: 100000,
+    publicSalePercentage: 55,
+    teamPercentage: 25,
+    treasuryPercentage: 20,
+    fundingGoal: 4000,
+    deadlineDays: 60,
+    unlockDurationDays: 180,
+    epochDurationDays: 14,
+  },
+  {
+    name: 'Crypto Education Hub',
+    tagline: 'Learn Web3 development and earn tokens while you build your portfolio.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=EDU',
+    websiteUrl: 'https://crypto-edu.academy',
+    tokenName: 'Learn Token',
+    symbol: 'LRN',
+    totalSupply: 1000000000,
+    publicSalePercentage: 25,
+    teamPercentage: 15,
+    treasuryPercentage: 60,
+    fundingGoal: 800,
+    deadlineDays: 30,
+    unlockDurationDays: 30,
+    epochDurationDays: 1,
+  },
+  {
+    name: 'Decentralized Social',
+    tagline: 'A censorship-resistant social network where users own their data and audience.',
+    logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=DSOC',
+    websiteUrl: 'https://dsocial.network',
+    tokenName: 'Social Graph Token',
+    symbol: 'SGT',
+    totalSupply: 100000000000,
+    publicSalePercentage: 50,
+    teamPercentage: 20,
+    treasuryPercentage: 30,
+    fundingGoal: 3000,
+    deadlineDays: 45,
+    unlockDurationDays: 90,
+    epochDurationDays: 7,
+  }
+];
 
 const STEP_NAMES = [
   'Project',
@@ -165,15 +311,34 @@ export default function CreateCampaignPage() {
     alert('Please click "Connect Wallet" in the Navigation Bar to sign transactions or connect your wallet.');
   };
 
+  const handleFillTestData = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const index = Number(e.target.value);
+    if (index >= 0 && index < TEST_DATA_OPTIONS.length) {
+      setData(TEST_DATA_OPTIONS[index]);
+    }
+  };
+
   return (
     <CreateCampaignLayout>
       <div className="flex justify-end mb-4">
-        <button
-          onClick={() => setData(TEST_DATA)}
-          className="text-xs font-bold px-3 py-1.5 bg-[#111111]/5 hover:bg-[#111111]/10 text-[#111111]/60 hover:text-[#111111] rounded uppercase tracking-wider transition-colors"
+        <select
+          onChange={handleFillTestData}
+          title="Select Demo Data"
+          className="text-xs font-bold px-3 py-1.5 bg-[#111111]/5 hover:bg-[#111111]/10 text-[#111111]/60 focus:text-[#111111] hover:text-[#111111] rounded uppercase tracking-wider transition-colors outline-none cursor-pointer border-none appearance-none pr-8 relative"
+          style={{
+            backgroundImage: `url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23111111%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 0.7rem top 50%',
+            backgroundSize: '0.65rem auto',
+          }}
         >
-          Fast-Fill Test Data
-        </button>
+          <option value="-1">Fast-Fill Demo Data...</option>
+          {TEST_DATA_OPTIONS.map((option, idx) => (
+            <option key={idx} value={idx}>
+              {idx + 1}. {option.name}
+            </option>
+          ))}
+        </select>
       </div>
       <StepIndicator 
         currentStep={currentStep} 

@@ -190,23 +190,23 @@ function FounderCampaignsGrid({ campaigns }: { campaigns: CreatedCampaign[] }) {
           <div className="grid grid-cols-2 gap-4 mb-8">
             <div className="border border-[#111111]/10 rounded-xl p-4 bg-[#FCFAF6]">
               <p className="text-xs text-[#111111]/50 uppercase tracking-wider mb-1">Raised</p>
-              <p className="font-bold text-xl">{camp.raisedBNB} <span className="text-sm font-normal text-[#111111]/60">BNB</span></p>
+              <p className="font-bold text-xl">{new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(camp.raisedBNB)} <span className="text-sm font-normal text-[#111111]/60">BNB</span></p>
             </div>
             <div className="border border-[#111111]/10 rounded-xl p-4 bg-[#FCFAF6]">
               <p className="text-xs text-[#111111]/50 uppercase tracking-wider mb-1">Goal</p>
-              <p className="font-bold text-xl">{camp.goalBNB} <span className="text-sm font-normal text-[#111111]/60">BNB</span></p>
+              <p className="font-bold text-xl">{new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(camp.goalBNB)} <span className="text-sm font-normal text-[#111111]/60">BNB</span></p>
             </div>
           </div>
 
           <div className="mb-8">
             <div className="flex justify-between text-xs mb-1">
               <span className="text-[#111111]/50">Funding Progress</span>
-              <span className="font-bold">{Math.round((camp.raisedBNB / camp.goalBNB) * 100)}%</span>
+              <span className="font-bold">{camp.goalBNB > 0 ? Math.round((camp.raisedBNB / camp.goalBNB) * 100) : 0}%</span>
             </div>
             <div className="h-2 w-full bg-[#111111]/10 rounded-full overflow-hidden">
               <div 
                 className="h-full rounded-full bg-[#111111]"
-                style={{ width: `${Math.min((camp.raisedBNB / camp.goalBNB) * 100, 100)}%` }}
+                style={{ width: `${camp.goalBNB > 0 ? Math.min((camp.raisedBNB / camp.goalBNB) * 100, 100) : 0}%` }}
               ></div>
             </div>
           </div>
