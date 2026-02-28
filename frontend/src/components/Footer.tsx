@@ -1,6 +1,27 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function Footer() {
+  const router = useRouter();
+
+  const handleHowItWorks = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    // Navigate to the homepage first, then scroll
+    router.push("/");
+    // Use a delay to allow the page to load before scrolling
+    setTimeout(() => {
+      const section = document.getElementById("how-it-works");
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        // If element not found yet (page still loading), set hash and let AnchorScrollHandler take over
+        window.location.hash = "how-it-works";
+      }
+    }, 300);
+  };
+
   return (
     <footer className="bg-[#FCFAF6] border-t border-[#111111]/10 py-16">
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-4 gap-12 text-[#111111]">
@@ -19,7 +40,16 @@ export default function Footer() {
           <ul className="space-y-4 text-sm text-[#111111]/70 font-sans">
             <li><Link href="/" className="hover:text-[#111111] transition-colors">Explore</Link></li>
             <li><Link href="/create" className="hover:text-[#111111] transition-colors">Create Campaign</Link></li>
-            <li><Link href="#" className="hover:text-[#111111] transition-colors">How it Works</Link></li>
+            <li><Link href="/dashboard" className="hover:text-[#111111] transition-colors">Dashboard</Link></li>
+            <li>
+              <a 
+                href="/#how-it-works" 
+                onClick={handleHowItWorks} 
+                className="hover:text-[#111111] transition-colors cursor-pointer"
+              >
+                How it Works
+              </a>
+            </li>
           </ul>
         </div>
         

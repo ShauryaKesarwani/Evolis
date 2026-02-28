@@ -7,9 +7,11 @@ import { ReactLenis } from "@studio-freight/react-lenis";
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // Ensure scroll is reset on path change
+  // Ensure scroll is reset on path change, unless there's an anchor hash
   useEffect(() => {
-    window.scrollTo(0, 0);
+    if (!window.location.hash) {
+      window.scrollTo(0, 0);
+    }
   }, [pathname]);
 
   return (

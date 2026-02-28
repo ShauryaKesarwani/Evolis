@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Inter, Martian_Mono } from 'next/font/google';
+import { useAccount } from 'wagmi';
 
 const inter = Inter({ subsets: ['latin'] });
 const martianMono = Martian_Mono({ subsets: ['latin'] });
@@ -141,7 +142,7 @@ function InvestmentsGrid({ investments }: { investments: Investment[] }) {
             </div>
           </div>
           
-          <Link href="/campaign" className="w-full py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
+          <Link href={`/campaign/${inv.id}`} className="w-full py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
             View Campaign
           </Link>
         </div>
@@ -211,13 +212,16 @@ function FounderCampaignsGrid({ campaigns }: { campaigns: CreatedCampaign[] }) {
           </div>
           
           <div className="mt-auto flex flex-col sm:flex-row gap-3">
-            <Link href={`/campaign`} className="flex-1 py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
+            <Link href={`/campaign/${camp.id}`} className="flex-1 py-3 border border-[#111111]/20 rounded-xl text-center font-medium hover:bg-[#111111]/5 transition-colors">
               Manage Project
             </Link>
             {camp.milestoneReady && (
-              <button className="flex-1 bg-[#111111] hover:bg-[#222222] text-white font-bold py-3 rounded-xl transition-colors">
+              <Link
+                href={`/campaign/${camp.id}/submit-milestone`}
+                className="flex-1 bg-[#111111] hover:bg-[#222222] text-white font-bold py-3 rounded-xl transition-colors text-center"
+              >
                 Submit Milestone
-              </button>
+              </Link>
             )}
           </div>
         </div>
@@ -231,6 +235,48 @@ function FounderCampaignsGrid({ campaigns }: { campaigns: CreatedCampaign[] }) {
 export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState('My Investments');
   const [isFounderMode, setIsFounderMode] = useState(false); // Toggle for mock states
+  const { address, isConnected } = useAccount();
+  const [mounted, setMounted] = useState(false);
+  
+  const [fetchedCampaigns, setFetchedCampaigns] = useState<CreatedCampaign[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && isConnected && address) {
+      const fetchProjects = async () => {
+        try {
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+          const res = await fetch(`${apiUrl}/projects`);
+          const data = await res.json();
+          const projects = data.projects || [];
+          
+          const myCampaigns = projects
+            .filter((p: any) => p.creator?.toLowerCase() === address.toLowerCase())
+            .map((p: any) => ({
+              id: String(p.id),
+              projectName: `Project #${p.id}`,
+              goalBNB: Number(p.funding_goal || 0) / 1e18,
+              raisedBNB: Number(p.total_raised || 0) / 1e18,
+              currentPhase: p.status || 'Active',
+              milestoneReady: false // Would require fetching milestones
+            }));
+            
+          setFetchedCampaigns(myCampaigns);
+        } catch (e) {
+          console.error("Failed to fetch dashboard campaigns", e);
+        }
+      };
+      
+      fetchProjects();
+    }
+  }, [mounted, isConnected, address]);
+
+  const displayAddress = mounted && isConnected && address 
+    ? `${address.slice(0, 6)}...${address.slice(-4)}` 
+    : 'Not Connected';
 
   return (
     <div className={`min-h-screen bg-[#FCFAF6] text-[#111111] pb-24 ${inter.className}`}>
@@ -244,7 +290,7 @@ export default function DashboardPage() {
             onChange={(e) => setIsFounderMode(e.target.checked)}
             className="accent-[#111111] w-4 h-4 cursor-pointer"
           />
-          Show Founder View (Populated)
+          Show Mock Data (Populated)
         </label>
       </div>
 
@@ -255,7 +301,7 @@ export default function DashboardPage() {
         </Link>
         
         <DashboardProfile 
-          address="vitalik.bnb" 
+          address={displayAddress} 
           totalInvested={isFounderMode ? 425.5 : 12.5} 
           projectsBacked={isFounderMode ? 12 : 1} 
         />
@@ -268,7 +314,7 @@ export default function DashboardPage() {
           )}
           
           {activeTab === 'My Campaigns' && (
-            <FounderCampaignsGrid campaigns={isFounderMode ? mockCreatedCampaigns : []} />
+            <FounderCampaignsGrid campaigns={isFounderMode ? mockCreatedCampaigns : fetchedCampaigns} />
           )}
 
           {activeTab === 'Token Portfolio' && (

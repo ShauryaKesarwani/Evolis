@@ -30,27 +30,23 @@ export function getEscrowContractWithAdmin(escrowAddress: string) {
 
 export async function fetchProjectFromChain(projectId: number) {
   const factory = getFactoryContract()
-  const meta = await factory.getProject(projectId)
+  const meta = await factory.getDeployment(projectId)
 
   // Ethers v6 structs come back as both array + named keys.
   const token = meta.token as string
-  const escrow = meta.escrow as string
-  const creator = meta.creator as string
-  const fundingGoal = (meta.fundingGoal as bigint).toString()
-  const deadline = Number(meta.deadline as bigint)
-  const goalReached = Boolean(meta.goalReached)
-  const finalized = Boolean(meta.finalized)
-
-  const status = finalized ? (goalReached ? 'FUNDED' : 'FAILED') : 'ACTIVE'
+  const controller = meta.controller as string
+  const owner = meta.owner as string
+  const totalSupply = (meta.totalSupply as bigint).toString()
+  const timestamp = Number(meta.timestamp as bigint)
 
   return {
     id: projectId,
     token_address: token,
-    escrow_address: escrow,
-    creator,
-    funding_goal: fundingGoal,
-    total_raised: null,
-    deadline,
-    status,
+    escrow_address: controller, // controller mapped to escrow_address column for now
+    creator: owner,
+    funding_goal: totalSupply, // placeholder: no funding goal in current contract
+    total_raised: null, // Always null: current contracts have no contribution/funding mechanism. Needs MilestoneEscrow.
+    deadline: timestamp, // using deployment timestamp; no deadline in current contract
+    status: 'ACTIVE',
   }
 }

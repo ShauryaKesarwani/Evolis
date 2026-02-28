@@ -19,5 +19,3 @@ Bun.serve({
 })
 
 console.log(`Backend listening on http://localhost:${env.PORT}`)
-
-export default app

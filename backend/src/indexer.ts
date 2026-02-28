@@ -1,9 +1,8 @@
 import { getEnv } from './config'
-import { getProvider } from './chain/client'
+import { getProvider, getFactoryContract, fetchProjectFromChain } from './chain/client'
 import { Interface } from 'ethers'
 import { factoryAbi } from './chain/abis'
 import { getSyncState, setSyncState, upsertProject } from './db'
-import { fetchProjectFromChain } from './chain/client'
 
 const LAST_BLOCK_KEY = 'factory:lastProcessedBlock'
 
@@ -52,14 +51,21 @@ export async function startIndexer() {
         continue
       }
 
-      if (parsed?.name === 'ProjectCreated') {
-        const projectId = Number(parsed.args.projectId)
+      if (parsed?.name === 'TokenDeployed') {
+        // TokenDeployed doesn't emit a projectId/index. We use the token address
+        // from the event to look up the deployment via deploymentInfo, or we infer
+        // the index from getTotalDeployments(). For simplicity during hackathon,
+        // we fetch the latest deployment index.
         try {
+          const factory = getFactoryContract()
+          const total = Number(await factory.getTotalDeployments())
+          // The just-created deployment is the latest one (total - 1).
+          const projectId = total - 1
           const chainProject = await fetchProjectFromChain(projectId)
           upsertProject(chainProject)
           console.log('[indexer] upserted project', projectId)
         } catch (err) {
-          console.warn('[indexer] failed to fetch project meta', projectId, err)
+          console.warn('[indexer] failed to fetch deployment meta', err)
         }
       }
     }
