@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
-import "../src/TokenFactory.sol";
+import "../src/EvolisFactory.sol";
 
 contract DeployFactory is Script {
     function run() external {
@@ -10,9 +10,9 @@ contract DeployFactory is Script {
         
         vm.startBroadcast(deployerPrivateKey);
         
-        TokenFactory factory = new TokenFactory();
+        EvolisFactory factory = new EvolisFactory();
         
-        console.log("TokenFactory deployed at:", address(factory));
+        console.log("EvolisFactory deployed at:", address(factory));
         
         vm.stopBroadcast();
     }
