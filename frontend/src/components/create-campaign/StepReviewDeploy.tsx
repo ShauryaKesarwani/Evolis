@@ -9,10 +9,9 @@ interface StepReviewDeployProps {
 }
 
 export default function StepReviewDeploy({ data, isWalletConnected, onDeploy, onConnectWallet }: StepReviewDeployProps) {
-  const totalUnlockAmount = data.milestones.reduce((sum, m) => sum + (Number(m.unlockAmount) || 0), 0);
   const isDataValid = 
     data.name && data.symbol && data.totalSupply > 0 && 
-    data.fundingGoal > 0 && totalUnlockAmount === data.fundingGoal;
+    data.fundingGoal > 0 && data.unlockDurationDays > 0 && data.epochDurationDays > 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -70,32 +69,31 @@ export default function StepReviewDeploy({ data, isWalletConnected, onDeploy, on
               <span className="font-martian font-bold text-xl text-[#b5e315] drop-shadow-[1px_1px_0px_#111111]">{data.fundingGoal || 0} BNB</span>
             </div>
             <div className="col-span-2">
-              <span className="block text-sm text-[#111111]/60 mb-1">Duration</span>
+              <span className="block text-sm text-[#111111]/60 mb-1">Campaign Duration</span>
               <span className="font-bold">{data.deadlineDays || 0} Days</span>
             </div>
           </div>
         </section>
 
-        {/* Milestones Section */}
+        {/* Liquidity Schedule Section */}
         <section>
-          <h3 className="text-sm font-bold text-[#111111]/50 uppercase tracking-wider mb-4 border-b border-[#111111]/10 pb-2">Milestone Schedule</h3>
-          <div className="space-y-3">
-            {data.milestones.map((m, i) => (
-              <div key={m.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-[#111111]/5">
-                <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-[#111111] text-white text-xs flex items-center justify-center">{i + 1}</span>
-                  <span className="font-medium text-sm md:text-base">{m.description || 'Unnamed Phase'}</span>
-                </div>
-                <span className="font-bold">{m.unlockAmount || 0} BNB</span>
-              </div>
-            ))}
+          <h3 className="text-sm font-bold text-[#111111]/50 uppercase tracking-wider mb-4 border-b border-[#111111]/10 pb-2">Liquidity Unlock Schedule</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <span className="block text-sm text-[#111111]/60 mb-1">Total Unlock Time</span>
+              <span className="font-bold">{data.unlockDurationDays || 0} Days</span>
+            </div>
+            <div>
+               <span className="block text-sm text-[#111111]/60 mb-1">Epoch Frequency</span>
+               <span className="font-bold">Every {data.epochDurationDays || 0} Days</span>
+            </div>
           </div>
         </section>
       </div>
 
       {!isDataValid && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium">
-          Please go back and ensure all required fields are filled out and your milestones match your funding goal.
+          Please go back and ensure all required fields are filled out.
         </div>
       )}
 

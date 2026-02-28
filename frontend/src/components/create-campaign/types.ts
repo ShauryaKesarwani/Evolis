@@ -24,7 +24,8 @@ export interface CampaignData {
   deadlineDays: number;
 
   // Step 4
-  milestones: Milestone[];
+  unlockDurationDays: number;
+  epochDurationDays: number;
 }
 
 export const initialCampaignData: CampaignData = {
@@ -40,5 +41,6 @@ export const initialCampaignData: CampaignData = {
   treasuryPercentage: 30,
   fundingGoal: 0,
   deadlineDays: 30,
-  milestones: [{ id: '1', description: 'Initial Phase', unlockAmount: 0 }],
+  unlockDurationDays: 30,
+  epochDurationDays: 1,
 };

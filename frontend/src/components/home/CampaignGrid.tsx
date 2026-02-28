@@ -5,6 +5,12 @@ import CampaignCard from "./CampaignCard";
 
 interface ProjectRow {
   id: number;
+  name: string | null;
+  tagline: string | null;
+  logo_url: string | null;
+  website_url: string | null;
+  symbol: string | null;
+  category: string | null;
   token_address: string | null;
   escrow_address: string | null;
   creator: string | null;
@@ -31,8 +37,11 @@ export default function CampaignGrid() {
           
           return {
             id: String(p.id),
-            name: `Project #${p.id}`,
-            category: "DeFi",
+            name: p.name || `Project #${p.id}`,
+            category: p.category || "DeFi",
+            symbol: p.symbol || null,
+            tagline: p.tagline || null,
+            logoUrl: p.logo_url || null,
             status: p.status || "Funding",
             milestoneStr: "View Details",
             raised: raisedNum.toLocaleString(undefined, { maximumFractionDigits: 4 }),

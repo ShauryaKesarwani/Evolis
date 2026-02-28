@@ -25,9 +25,9 @@ export default function ProjectDescription({ description, team }: ProjectDescrip
               <div className="w-12 h-12 rounded-full bg-[#111111]/5 border border-[#111111]/10 flex items-center justify-center font-mono font-bold text-[#111111]/50 text-xl shrink-0">
                 {member.name.charAt(0)}
               </div>
-              <div>
+              <div className="overflow-hidden min-w-0">
                 <p className="font-bold text-[#111111] text-lg">{member.name}</p>
-                <p className="text-sm text-[#111111]/70 font-bold uppercase tracking-wider mt-0.5">{member.role}</p>
+                <p className="text-sm text-[#111111]/70 font-bold uppercase tracking-wider mt-0.5 truncate">{member.role}</p>
               </div>
             </div>
           ))}

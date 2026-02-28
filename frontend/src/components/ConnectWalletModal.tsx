@@ -10,8 +10,15 @@ interface ConnectWalletModalProps {
 }
 
 export default function ConnectWalletModal({ isOpen, onClose }: ConnectWalletModalProps) {
-  const { connectors, connect, isSuccess, error } = useConnect();
+  const { connectors: allConnectors, connect, isSuccess, error } = useConnect();
   const [mounted, setMounted] = useState(false);
+
+  // Deduplicate connectors by name (wagmi auto-detects injected wallets,
+  // which can duplicate the explicitly configured MetaMask connector)
+  const connectors = allConnectors.filter(
+    (connector, index, self) =>
+      self.findIndex((c) => c.name === connector.name) === index
+  );
 
   useEffect(() => {
     setMounted(true);

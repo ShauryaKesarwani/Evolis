@@ -8,6 +8,7 @@ import MilestoneTracker, { Milestone } from '@/components/campaign/MilestoneTrac
 import ProjectDescription from '@/components/campaign/ProjectDescription';
 import ActivityFeed from '@/components/campaign/ActivityFeed';
 import FounderActionStrip from '@/components/campaign/FounderActionStrip';
+import LiquidityDashboard from '@/components/plu/LiquidityDashboard';
 
 export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -126,7 +127,14 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
           allocations={token.allocations}
         />
         
-        <MilestoneTracker milestones={displayMilestones} />
+        {projectData?.controller_address ? (
+          <div className="mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <h2 className="font-martian text-2xl font-bold mb-6 uppercase tracking-tight">Liquidity Dashboard</h2>
+            <LiquidityDashboard controllerAddress={projectData.controller_address} />
+          </div>
+        ) : (
+          <MilestoneTracker milestones={displayMilestones} />
+        )}
         
         <ProjectDescription 
           description={campaign.description}

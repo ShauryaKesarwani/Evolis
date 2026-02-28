@@ -5,8 +5,15 @@ import { getEnv } from './config'
 
 export type ProjectRow = {
   id: number
+  name: string | null
+  tagline: string | null
+  logo_url: string | null
+  website_url: string | null
+  symbol: string | null
+  category: string | null
   token_address: string | null
   escrow_address: string | null
+  controller_address: string | null
   creator: string | null
   funding_goal: string | null
   total_raised: string | null
@@ -62,8 +69,10 @@ function migrate(db: Database) {
   db.exec(`
     CREATE TABLE IF NOT EXISTS projects (
       id INTEGER PRIMARY KEY,
+      name TEXT,
       token_address TEXT,
       escrow_address TEXT,
+      controller_address TEXT,
       creator TEXT,
       funding_goal TEXT,
       total_raised TEXT,
@@ -102,6 +111,15 @@ function migrate(db: Database) {
       value TEXT NOT NULL
     );
   `)
+
+  // Migration: add columns if they don't exist (for existing DBs)
+  try { db.exec('ALTER TABLE projects ADD COLUMN name TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN controller_address TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN tagline TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN logo_url TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN website_url TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN symbol TEXT') } catch {}
+  try { db.exec('ALTER TABLE projects ADD COLUMN category TEXT') } catch {}
 }
 
 export function nowUnix(): number {
@@ -113,32 +131,64 @@ export function upsertProject(input: Omit<ProjectRow, 'created_at' | 'updated_at
   const ts = nowUnix()
   db.prepare(
     `INSERT INTO projects (
-        id, token_address, escrow_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
+        id, name, token_address, escrow_address, controller_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
       ) VALUES (
-        $id, $token_address, $escrow_address, $creator, $funding_goal, $total_raised, $deadline, $status, $created_at, $updated_at
+        $id, $name, $token_address, $escrow_address, $controller_address, $creator, $funding_goal, $total_raised, $deadline, $status, $created_at, $updated_at
       )
       ON CONFLICT(id) DO UPDATE SET
-        token_address=excluded.token_address,
-        escrow_address=excluded.escrow_address,
-        creator=excluded.creator,
-        funding_goal=excluded.funding_goal,
-        total_raised=excluded.total_raised,
-        deadline=excluded.deadline,
-        status=excluded.status,
+        token_address=COALESCE(excluded.token_address, projects.token_address),
+        escrow_address=COALESCE(excluded.escrow_address, projects.escrow_address),
+        controller_address=COALESCE(excluded.controller_address, projects.controller_address),
+        creator=CASE WHEN excluded.creator IS NOT NULL AND excluded.creator != '0x0000000000000000000000000000000000000000' THEN excluded.creator ELSE projects.creator END,
+        name=COALESCE(excluded.name, projects.name),
+        funding_goal=COALESCE(excluded.funding_goal, projects.funding_goal),
+        total_raised=COALESCE(excluded.total_raised, projects.total_raised),
+        deadline=COALESCE(excluded.deadline, projects.deadline),
+        status=COALESCE(excluded.status, projects.status),
         updated_at=excluded.updated_at
     `,
   ).run({
-    ...input,
-    created_at: ts,
-    updated_at: ts,
+    $id: input.id,
+    $name: input.name ?? null,
+    $token_address: input.token_address,
+    $escrow_address: input.escrow_address,
+    $controller_address: input.controller_address ?? null,
+    $creator: input.creator,
+    $funding_goal: input.funding_goal,
+    $total_raised: input.total_raised,
+    $deadline: input.deadline,
+    $status: input.status,
+    $created_at: ts,
+    $updated_at: ts,
   })
+}
+
+/** Update project metadata from frontend after deployment */
+export function updateProjectMeta(projectId: number, meta: {
+  name?: string; creator?: string; tagline?: string;
+  logo_url?: string; website_url?: string; symbol?: string; category?: string;
+}) {
+  const db = getDb()
+  const ts = nowUnix()
+  const sets: string[] = ['updated_at = $updated_at']
+  const params: any = { $id: projectId, $updated_at: ts }
+
+  const fields: (keyof typeof meta)[] = ['name', 'creator', 'tagline', 'logo_url', 'website_url', 'symbol', 'category']
+  for (const field of fields) {
+    if (meta[field]) {
+      sets.push(`${field} = $${field}`)
+      params[`$${field}`] = meta[field]
+    }
+  }
+
+  db.prepare(`UPDATE projects SET ${sets.join(', ')} WHERE id = $id`).run(params)
 }
 
 export function listProjects(): ProjectRow[] {
   const db = getDb()
   return db
     .prepare(
-      `SELECT id, token_address, escrow_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
+      `SELECT id, name, tagline, logo_url, website_url, symbol, category, token_address, escrow_address, controller_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
        FROM projects
        ORDER BY id DESC`,
     )
@@ -150,7 +200,7 @@ export function getProject(projectId: number): ProjectRow | null {
   return (
     db
       .prepare(
-        `SELECT id, token_address, escrow_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
+        `SELECT id, name, tagline, logo_url, website_url, symbol, category, token_address, escrow_address, controller_address, creator, funding_goal, total_raised, deadline, status, created_at, updated_at
          FROM projects
          WHERE id = ?`,
       )

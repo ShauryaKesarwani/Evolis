@@ -41,8 +41,10 @@ export async function fetchProjectFromChain(projectId: number) {
 
   return {
     id: projectId,
+    name: null,
     token_address: token,
     escrow_address: controller, // controller mapped to escrow_address column for now
+    controller_address: controller,
     creator: owner,
     funding_goal: totalSupply, // placeholder: no funding goal in current contract
     total_raised: null, // Always null: current contracts have no contribution/funding mechanism. Needs MilestoneEscrow.

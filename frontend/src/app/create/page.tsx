@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
 import { bscTestnet } from 'wagmi/chains';
 import { parseEther } from 'viem';
@@ -27,11 +28,8 @@ const TEST_DATA: CampaignData = {
   treasuryPercentage: 30,
   fundingGoal: 10,
   deadlineDays: 45,
-  milestones: [
-    { id: 'm1', description: 'Smart Contract Audit & Testnet Launch', unlockAmount: 4 },
-    { id: 'm2', description: 'Mainnet V1 Deployment', unlockAmount: 3 },
-    { id: 'm3', description: 'Marketing & Exchange Listings', unlockAmount: 3 }
-  ],
+  unlockDurationDays: 30,
+  epochDurationDays: 1,
 };
 
 const STEP_NAMES = [
@@ -48,6 +46,7 @@ export default function CreateCampaignPage() {
   const { isConnected, chainId } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const [mounted, setMounted] = useState(false);
+  const navRouter = useRouter();
 
   useEffect(() => {
     setMounted(true);
@@ -83,10 +82,11 @@ export default function CreateCampaignPage() {
       }
       
       const totalSupplyWei = BigInt(data.totalSupply) * (BigInt(10) ** BigInt(18));
-      const initialLiquidityPercent = BigInt(50); // default
-      const unlockDuration = BigInt(data.deadlineDays) * BigInt(24 * 60 * 60);
-      const epochDuration = BigInt(24 * 60 * 60);
-      const router = '0x10ED43C718714eb63d5aA57B78B54704E256024E'; // PancakeSwap Mainnet router / Default
+      const initialLiquidityPercent = BigInt(data.publicSalePercentage || 50); 
+      const unlockDuration = BigInt(data.unlockDurationDays || 30) * BigInt(24 * 60 * 60);
+      const epochDuration = BigInt(data.epochDurationDays || 1) * BigInt(24 * 60 * 60);
+      // Fallback router if pluConfig fails to load
+      const router = process.env.NEXT_PUBLIC_PANCAKE_ROUTER || '0x10ED43C718714eb63d5aA57B78B54704E256024E';
 
       // Switch chain before deploying if needed
       if (chainId !== bscTestnet.id) {
@@ -117,7 +117,7 @@ export default function CreateCampaignPage() {
           initialLiquidityPercent,
           unlockDuration,
           epochDuration,
-          router
+          router: router as `0x${string}`
         }],
         // Bug Fix: We shouldn't charge the creator their own funding goal!
         // The contract currently expects some msg.value to seed the initial PancakeSwap pool.
@@ -127,7 +127,31 @@ export default function CreateCampaignPage() {
       
       console.log('Deployed Tx:', txHash);
       alert(`Campaign deployed successfully! Transaction Hash: ${txHash}`);
-      // In a real app we would wait for confirmation, then route to the newly created campaign page
+      
+      // Save campaign metadata to backend
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        await fetch(`${apiUrl}/projects`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: data.name || data.tokenName,
+            creator: (window as any).ethereum?.selectedAddress || '',
+            tagline: data.tagline,
+            logoUrl: data.logoUrl,
+            websiteUrl: data.websiteUrl,
+            symbol: data.symbol,
+            category: 'DeFi',
+          }),
+        });
+      } catch (e) {
+        console.warn('Failed to save campaign metadata:', e);
+      }
+      
+      // Delay slightly so the backend indexer can pick up the deployment
+      setTimeout(() => {
+        navRouter.push('/');
+      }, 4000);
       
     } catch (error) {
       console.error('Deployment failed:', error);

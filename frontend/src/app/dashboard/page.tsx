@@ -245,7 +245,7 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    if (mounted && isConnected && address) {
+    if (mounted) {
       const fetchProjects = async () => {
         try {
           const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -253,16 +253,26 @@ export default function DashboardPage() {
           const data = await res.json();
           const projects = data.projects || [];
           
-          const myCampaigns = projects
-            .filter((p: any) => p.creator?.toLowerCase() === address.toLowerCase())
-            .map((p: any) => ({
-              id: String(p.id),
-              projectName: `Project #${p.id}`,
-              goalBNB: Number(p.funding_goal || 0) / 1e18,
-              raisedBNB: Number(p.total_raised || 0) / 1e18,
-              currentPhase: p.status || 'Active',
-              milestoneReady: false // Would require fetching milestones
-            }));
+          // Try to filter by creator if wallet is connected
+          let filteredProjects = projects;
+          if (isConnected && address) {
+            const myProjects = projects.filter(
+              (p: any) => p.creator?.toLowerCase() === address.toLowerCase()
+            );
+            // If creator filter found nothing (contract stores 0x000...), show all
+            if (myProjects.length > 0) {
+              filteredProjects = myProjects;
+            }
+          }
+          
+          const myCampaigns = filteredProjects.map((p: any) => ({
+            id: String(p.id),
+            projectName: p.name || `Project #${p.id}`,
+            goalBNB: Number(p.funding_goal || 0) / 1e18,
+            raisedBNB: Number(p.total_raised || 0) / 1e18,
+            currentPhase: p.status || 'Active',
+            milestoneReady: false
+          }));
             
           setFetchedCampaigns(myCampaigns);
         } catch (e) {

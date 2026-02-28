@@ -18,7 +18,7 @@ export default function AnchorScrollHandler() {
       const targetElement = document.querySelector(hash);
       if (targetElement) {
         if (lenis) {
-          lenis.scrollTo(targetElement, {
+          lenis.scrollTo(targetElement as HTMLElement, {
             offset: -100,
             duration: 1.5,
             easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -52,7 +52,7 @@ export default function AnchorScrollHandler() {
 
       const targetElement = document.querySelector(hash);
       if (targetElement && lenis) {
-        lenis.scrollTo(targetElement, {
+        lenis.scrollTo(targetElement as HTMLElement, {
           offset: -100,
           duration: 1.5,
           easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),

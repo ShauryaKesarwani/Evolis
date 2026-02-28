@@ -24,7 +24,7 @@ export default function FounderActionStrip({ campaignId, creatorAddress = "0x981
   if (!isOwner && !isAdmin) return null;
 
   return (
-    <div className="bg-[#111111] text-[#FCFAF6] py-3 px-4 border-b border-[#FCFAF6]/10 sticky top-0 z-50">
+    <div className="bg-[#111111] text-[#FCFAF6] py-3 px-4 border-b border-[#FCFAF6]/10 sticky top-[72px] z-40">
       <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-[#b5e315] flex items-center justify-center">

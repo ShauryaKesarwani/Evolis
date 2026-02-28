@@ -11,6 +11,9 @@ interface CampaignCardProps {
   target: string;
   price: string;
   progressPercent: number;
+  symbol?: string | null;
+  tagline?: string | null;
+  logoUrl?: string | null;
 }
 
 export default function CampaignCard({
@@ -23,27 +26,41 @@ export default function CampaignCard({
   target,
   price,
   progressPercent,
+  symbol,
+  tagline,
+  logoUrl,
 }: CampaignCardProps) {
   return (
     <Link href={`/campaign/${id}`} className="group block h-full">
       <div className="h-full flex flex-col bg-white rounded-3xl border border-[#111111]/10 p-6 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:border-[#111111]/30 hover:-translate-y-1 active:translate-y-0 active:shadow-none relative overflow-hidden">
         
         {/* Top Header Row */}
-        <div className="flex justify-between items-start mb-6">
+        <div className="flex justify-between items-start mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-[#FCFAF6] rounded-xl border border-[#111111]/10 flex items-center justify-center font-mono font-bold text-xl text-[#111111]">
-              {name.charAt(0)}
-            </div>
+            {logoUrl ? (
+              <div className="w-12 h-12 rounded-xl border border-[#111111]/10 overflow-hidden flex-shrink-0">
+                <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+              </div>
+            ) : (
+              <div className="w-12 h-12 bg-[#FCFAF6] rounded-xl border border-[#111111]/10 flex items-center justify-center font-mono font-bold text-xl text-[#111111] flex-shrink-0">
+                {(symbol || name).charAt(0)}
+              </div>
+            )}
             <div>
               <h3 className="font-bold text-lg text-[#111111] leading-tight group-hover:text-accent transition-colors">{name}</h3>
-              <p className="text-xs text-[#111111]/50 font-sans uppercase tracking-wider">{category}</p>
+              <p className="text-xs text-[#111111]/50 font-sans uppercase tracking-wider">{symbol ? `$${symbol} · ` : ""}{category}</p>
             </div>
           </div>
           
-          <div className="px-3 py-1 bg-accent text-[#111111] text-xs font-bold font-mono tracking-tight rounded-full border border-[#111111]/10 shadow-sm">
+          <div className="px-3 py-1 bg-accent text-[#111111] text-xs font-bold font-mono tracking-tight rounded-full border border-[#111111]/10 shadow-sm flex-shrink-0">
             {status}
           </div>
         </div>
+
+        {/* Tagline */}
+        {tagline && (
+          <p className="text-sm text-[#111111]/60 font-sans leading-relaxed mb-4 line-clamp-2">{tagline}</p>
+        )}
 
         {/* Progress Section */}
         <div className="mt-auto">

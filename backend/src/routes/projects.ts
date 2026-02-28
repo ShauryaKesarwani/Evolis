@@ -1,12 +1,50 @@
 import { Hono } from 'hono'
-import { getProject, listContributors, listMilestones, listProjects, upsertProject } from '../db'
-import { fetchProjectFromChain } from '../chain/client'
+import { getProject, listContributors, listMilestones, listProjects, upsertProject, updateProjectMeta } from '../db'
+import { fetchProjectFromChain, getFactoryContract } from '../chain/client'
 
 export const projectsRoutes = new Hono()
 
 projectsRoutes.get('/projects', (c) => {
   const projects = listProjects()
   return c.json({ projects })
+})
+
+/** Frontend calls this after deployment to save campaign metadata */
+projectsRoutes.post('/projects', async (c) => {
+  try {
+    const body = await c.req.json()
+    const { name, creator, tagline, logoUrl, websiteUrl, symbol, category } = body
+
+    // Get the latest project ID from the factory contract
+    const factory = getFactoryContract()
+    const total = Number(await factory.getTotalDeployments())
+    const projectId = total - 1
+
+    // Ensure the project is indexed
+    let project = getProject(projectId)
+    if (!project) {
+      try {
+        const chainProject = await fetchProjectFromChain(projectId)
+        upsertProject(chainProject)
+      } catch {}
+    }
+
+    // Update with frontend metadata
+    updateProjectMeta(projectId, {
+      name,
+      creator,
+      tagline,
+      logo_url: logoUrl,
+      website_url: websiteUrl,
+      symbol,
+      category: category || 'DeFi',
+    })
+
+    return c.json({ success: true, projectId })
+  } catch (err: any) {
+    console.error('POST /projects error:', err)
+    return c.json({ error: err.message }, 500)
+  }
 })
 
 projectsRoutes.get('/project/:id', async (c) => {
@@ -45,3 +83,4 @@ projectsRoutes.get('/project/:id/contributors', (c) => {
   const contributors = listContributors(projectId)
   return c.json({ projectId, contributors })
 })
+
