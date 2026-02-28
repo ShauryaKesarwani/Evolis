@@ -13,6 +13,7 @@ const martianMono = Martian_Mono({ subsets: ['latin'] });
 type Milestone = {
   id: string;
   projectId: string;
+  realMilestoneIndex: number;
   projectName: string;
   descriptionSnippet: string;
   fullDescription: string;
@@ -26,6 +27,7 @@ const mockMilestones: Milestone[] = [
   {
     id: 'm1',
     projectId: 'p1',
+    realMilestoneIndex: 0,
     projectName: 'DeFi Liquidity Hub',
     descriptionSnippet: 'Smart Contract Audit & Testnet Deployment',
     fullDescription: 'Completed comprehensive smart contract audit with Certik and successfully deployed the v1 protocol to the BNB testnet. All critical bugs fixed.',
@@ -37,6 +39,7 @@ const mockMilestones: Milestone[] = [
   {
     id: 'm2',
     projectId: 'p2',
+    realMilestoneIndex: 1,
     projectName: 'GameFi NFT Marketplace',
     descriptionSnippet: 'Beta Launch and Initial User Acquisition',
     fullDescription: 'Launched beta version of the marketplace. Acquired 5,000 active users in the first week and achieved 1,000 daily active users.',
@@ -48,6 +51,7 @@ const mockMilestones: Milestone[] = [
   {
     id: 'm3',
     projectId: 'p3',
+    realMilestoneIndex: 2,
     projectName: 'Regen Agriculture Tracker',
     descriptionSnippet: 'IoT Sensor Integration',
     fullDescription: 'Successfully integrated 50 field sensors to track soil moisture and carbon sequestration data in real-time, syncing to the BNB Greenfield.',

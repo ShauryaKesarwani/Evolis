@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
+import { bscTestnet } from 'wagmi/chains';
 import { parseEther } from 'viem';
 import { factoryAbi } from '@/chain/abis';
 import CreateCampaignLayout from '@/components/create-campaign/CreateCampaignLayout';
@@ -12,6 +13,26 @@ import StepFundingGoal from '@/components/create-campaign/StepFundingGoal';
 import StepMilestones from '@/components/create-campaign/StepMilestones';
 import StepReviewDeploy from '@/components/create-campaign/StepReviewDeploy';
 import { CampaignData, initialCampaignData } from '@/components/create-campaign/types';
+
+const TEST_DATA: CampaignData = {
+  name: 'Echo Test Project',
+  tagline: 'A revolutionized way to test decentralized applications quickly and automatically.',
+  logoUrl: 'https://placehold.co/400x400/111111/FCFAF6/png?text=ECHO',
+  websiteUrl: 'https://echo-testing.dev',
+  tokenName: 'Echo Test Token',
+  symbol: 'ECHO',
+  totalSupply: 10000000,
+  publicSalePercentage: 50,
+  teamPercentage: 20,
+  treasuryPercentage: 30,
+  fundingGoal: 10,
+  deadlineDays: 45,
+  milestones: [
+    { id: 'm1', description: 'Smart Contract Audit & Testnet Launch', unlockAmount: 4 },
+    { id: 'm2', description: 'Mainnet V1 Deployment', unlockAmount: 3 },
+    { id: 'm3', description: 'Marketing & Exchange Listings', unlockAmount: 3 }
+  ],
+};
 
 const STEP_NAMES = [
   'Project',
@@ -24,7 +45,8 @@ const STEP_NAMES = [
 export default function CreateCampaignPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [data, setData] = useState<CampaignData>(initialCampaignData);
-  const { isConnected } = useAccount();
+  const { isConnected, chainId } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -60,16 +82,34 @@ export default function CreateCampaignPage() {
         return;
       }
       
-      const totalSupplyWei = BigInt(data.totalSupply) * 10n**18n;
-      const initialLiquidityPercent = 50n; // default
-      const unlockDuration = BigInt(data.deadlineDays) * 24n * 60n * 60n;
-      const epochDuration = 24n * 60n * 60n;
+      const totalSupplyWei = BigInt(data.totalSupply) * (BigInt(10) ** BigInt(18));
+      const initialLiquidityPercent = BigInt(50); // default
+      const unlockDuration = BigInt(data.deadlineDays) * BigInt(24 * 60 * 60);
+      const epochDuration = BigInt(24 * 60 * 60);
       const router = '0x10ED43C718714eb63d5aA57B78B54704E256024E'; // PancakeSwap Mainnet router / Default
+
+      // Switch chain before deploying if needed
+      if (chainId !== bscTestnet.id) {
+        if (!switchChainAsync) {
+          alert("Your wallet doesn't support switching chains automatically. Please switch to BNB Smart Chain Testnet manually.");
+          return;
+        }
+        try {
+          await switchChainAsync({ chainId: bscTestnet.id });
+          // Wait a moment for Wagmi's internal provider to reflect the new chain
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+        } catch (error: any) {
+          console.error('Failed to switch chain:', error);
+          alert('You must switch your wallet to BNB Smart Chain Testnet to deploy.');
+          return;
+        }
+      }
 
       const txHash = await writeContractAsync({
         abi: factoryAbi,
         address: process.env.NEXT_PUBLIC_FACTORY_ADDRESS as `0x${string}`,
         functionName: 'deployTokenV2',
+        chainId: bscTestnet.id,
         args: [{
           name: data.tokenName,
           symbol: data.symbol,
@@ -79,7 +119,10 @@ export default function CreateCampaignPage() {
           epochDuration,
           router
         }],
-        value: parseEther(data.fundingGoal.toString())
+        // Bug Fix: We shouldn't charge the creator their own funding goal!
+        // The contract currently expects some msg.value to seed the initial PancakeSwap pool.
+        // For testing, we send a nominal amount (0.001 BNB) instead of the whole funding goal.
+        value: parseEther('0.001')
       });
       
       console.log('Deployed Tx:', txHash);
@@ -100,6 +143,14 @@ export default function CreateCampaignPage() {
 
   return (
     <CreateCampaignLayout>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={() => setData(TEST_DATA)}
+          className="text-xs font-bold px-3 py-1.5 bg-[#111111]/5 hover:bg-[#111111]/10 text-[#111111]/60 hover:text-[#111111] rounded uppercase tracking-wider transition-colors"
+        >
+          Fast-Fill Test Data
+        </button>
+      </div>
       <StepIndicator 
         currentStep={currentStep} 
         totalSteps={STEP_NAMES.length} 
