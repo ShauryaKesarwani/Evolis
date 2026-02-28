@@ -29,8 +29,8 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto flex justify-between items-center">
         {/* Logo */}
-        <Link href="/" className="text-2xl font-bold font-mono text-[#111111] tracking-tighter flex items-center gap-1">
-          <div className="w-6 h-6 bg-accent rounded-sm shadow-sm border border-[#111111]"></div>
+        <Link href="/" className="text-2xl font-bold font-mono text-[#111111] tracking-tighter flex items-center gap-2">
+          <img src="/logo.png" alt="Evolis Logo" className="w-8 h-8 rounded-sm object-contain" />
           EVOLIS
         </Link>
         

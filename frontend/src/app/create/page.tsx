@@ -288,6 +288,7 @@ export default function CreateCampaignPage() {
             websiteUrl: data.websiteUrl,
             symbol: data.symbol,
             category: 'DeFi',
+            fundingGoal: data.fundingGoal,
           }),
         });
       } catch (e) {

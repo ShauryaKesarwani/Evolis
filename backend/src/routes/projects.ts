@@ -13,7 +13,7 @@ projectsRoutes.get('/projects', (c) => {
 projectsRoutes.post('/projects', async (c) => {
   try {
     const body = await c.req.json()
-    const { name, creator, tagline, logoUrl, websiteUrl, symbol, category } = body
+    const { name, creator, tagline, logoUrl, websiteUrl, symbol, category, fundingGoal } = body
 
     // Get the latest project ID from the factory contract
     const factory = getFactoryContract()
@@ -38,6 +38,7 @@ projectsRoutes.post('/projects', async (c) => {
       website_url: websiteUrl,
       symbol,
       category: category || 'DeFi',
+      funding_goal: fundingGoal ? String(BigInt(Math.round(Number(fundingGoal) * 1e18))) : undefined,
     })
 
     return c.json({ success: true, projectId })

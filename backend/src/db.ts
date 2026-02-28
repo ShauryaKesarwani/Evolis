@@ -172,13 +172,14 @@ export function upsertProject(input: Omit<ProjectRow, 'created_at' | 'updated_at
 export function updateProjectMeta(projectId: number, meta: {
   name?: string; creator?: string; tagline?: string;
   logo_url?: string; website_url?: string; symbol?: string; category?: string;
+  funding_goal?: string;
 }) {
   const db = getDb()
   const ts = nowUnix()
   const sets: string[] = ['updated_at = $updated_at']
   const params: any = { $id: projectId, $updated_at: ts }
 
-  const fields: (keyof typeof meta)[] = ['name', 'creator', 'tagline', 'logo_url', 'website_url', 'symbol', 'category']
+  const fields: (keyof typeof meta)[] = ['name', 'creator', 'tagline', 'logo_url', 'website_url', 'symbol', 'category', 'funding_goal']
   for (const field of fields) {
     if (meta[field]) {
       sets.push(`${field} = $${field}`)

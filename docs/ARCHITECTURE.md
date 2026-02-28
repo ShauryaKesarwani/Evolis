@@ -1,212 +1,229 @@
-# 🏗 ARCHITECTURE_SUMMARY.md
+# Evolis — System Architecture
+
+## High-Level Overview
+
+Evolis is a **milestone-gated tokenized crowdfunding platform** on BNB Chain. The system has three main layers: a Next.js frontend, a Bun/Hono backend, and Solidity smart contracts deployed on BNB Chain Testnet.
+
+```mermaid
+graph TD
+    subgraph "Frontend (Next.js + Tailwind)"
+        FE_HOME["Home / Explore"]
+        FE_CREATE["Create Campaign"]
+        FE_DETAIL["Campaign Detail"]
+        FE_DASH["Dashboard"]
+        FE_ADMIN["Admin Panel"]
+    end
+
+    subgraph "Wallet Layer"
+        WAGMI["Wagmi + WalletConnect"]
+        MM["MetaMask / Injected Wallet"]
+    end
+
+    subgraph "Backend (Bun + Hono)"
+        API["REST API :3001"]
+        INDEXER["Chain Indexer"]
+        DB["SQLite Database"]
+    end
+
+    subgraph "BNB Chain Testnet"
+        FACTORY["EvolisFactory"]
+        POOL["EvolisPool"]
+        TOKEN["Token (ERC-20)"]
+        CONTROLLER["LiquidityController (PLU)"]
+    end
+
+    FE_HOME --> API
+    FE_CREATE --> WAGMI
+    FE_DETAIL --> API
+    WAGMI --> MM
+    WAGMI --> FACTORY
+    WAGMI --> POOL
+    API --> DB
+    INDEXER --> FACTORY
+    INDEXER --> DB
+    FACTORY --> POOL
+    FACTORY --> TOKEN
+    FACTORY --> CONTROLLER
+    POOL --> TOKEN
+    CONTROLLER --> TOKEN
+```
 
 ---
 
-# 🔷 System Overview
+## Smart Contract Layer
 
-Frontend (Next.js + Tailwind)
-        ↓
-Backend (Event Indexer + API)
-        ↓
-Smart Contracts (BNB Chain)
-        ↓
-TokenFactory + Token + LiquidityController
+### EvolisFactory
+**Purpose:** Deploy and register new project pools.
 
-Backend does NOT custody funds.
-All critical logic is on-chain.
+- `createPool(params)` → atomically deploys Token + EvolisPool + LiquidityController
+- Tracks all deployed pools via `poolCount()` and `getPool(index)`
+- Emits deployment events for indexing
 
----
+### EvolisPool
+**Purpose:** The core contract combining bonding curve fundraise, milestone escrow, and IL protection. Each campaign gets its own EvolisPool instance.
 
-# 📜 Smart Contract Layer
+**Phase 1 — Bonding Curve Fundraise:**
+- Users buy project tokens at a configurable price (`buyBondingCurve()`)
+- 1% platform fee + 0.5% IL protection fund deducted per purchase
+- Funds held in escrow until funding goal is reached
+- If goal not met by deadline → refunds enabled
 
-## 1️⃣ TokenFactory
+**Phase 2 — Milestone Escrow:**
+- On funding goal reached: 50% BNB released to project owner, 50% reserved for progressive liquidity
+- Milestone verification via admin/backend
+- Progressive fund release gated by milestone completion
 
-Responsible for:
-- Deploying new token + controller pairs via `deployTokenV2()`
-- Tracking all deployments
-- Emitting `TokenDeployed` events
+**Phase 3 — Post-Funding:**
+- EvoLP tokens minted to backers (proportional to BNB contribution)
+- IL protection: coverage scales with holding duration (0% < 30d, 50% 30-90d, 100% > 90d)
+- Circuit breaker for extreme price movements
 
-Stores (per deployment):
-- token address
-- controller address
-- owner
-- timestamp
-- totalSupply, initialTokens, lockedTokens
+### Token (ERC-20)
+Standard ERC-20 with fixed supply, minted at deployment to the pool and controller.
 
-Emits:
-- TokenDeployed event
+### LiquidityController (PLU)
+**Progressive Liquidity Unlock engine:**
+- Holds locked tokens (e.g., 60% of supply)
+- Releases tokens epoch-by-epoch into AMM
+- Configurable: unlock duration, epoch duration, total epochs
+- `unlockEpoch()` — releases one epoch's worth of tokens
+- `getUnlockProgress()` — returns current unlock status
 
----
-
-## 2️⃣ Token (ERC-20)
-
-Standard ERC20.
-
-Features:
-- Fixed supply
-- Minted at deployment to recipient
-- Stores immutable deployer address
-
-No pricing logic inside token.
+### PLUPair + PLUFactory (Anti-Whale — Not Yet Integrated)
+Custom AMM pair with dynamic whale fees. Code exists but is not wired into the production deployment path.
 
 ---
 
-## 3️⃣ LiquidityController (PLU)
+## Backend Layer
 
-Progressive Liquidity Unlock controller.
+### Stack
+| Component | Technology |
+|-----------|-----------|
+| Runtime | Bun |
+| Framework | Hono |
+| Database | Bun SQLite |
+| Chain Client | Ethers.js v6 |
 
-### State Variables
+### REST API Endpoints
 
-- token
-- owner
-- lockedTokens
-- unlockDuration
-- epochDuration
-- totalEpochs
-- unlockPerEpoch
-- epochsUnlocked
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/projects` | List all indexed projects |
+| `POST` | `/projects` | Save campaign metadata after deployment |
+| `GET` | `/project/:id` | Get project details (auto-fetches from chain if missing) |
+| `GET` | `/project/:id/milestones` | List milestones for a project |
+| `GET` | `/project/:id/contributors` | List contributors with aggregated amounts |
+| `POST` | `/project/:id/contribute` | Record a contribution |
+| `POST` | `/verify-milestone` | Admin: verify a milestone (requires `x-admin-address` header) |
+| `POST` | `/release-milestone` | Admin: release milestone funds (requires `x-admin-address` header) |
 
-### Core Functions
+### Chain Indexer
+Polls `EvolisFactory.poolCount()` every 10 seconds. For each new pool discovered, fetches on-chain data (`projectToken`, `projectOwner`, `fundingGoal`, `deadline`, `totalRaised`, `goalReached`) and upserts into SQLite.
 
-initialize() — Adds initial liquidity to PancakeSwap
-unlockEpoch() — Releases tokens for current epoch into AMM
-manualAddLiquidity() — Owner-controlled manual injection
+### Database Schema
 
----
-
-# 🔹 Deployment Flow
-
-deployTokenV2():
-
-1. Validate config inputs
-2. Calculate token split (initialTokens vs lockedTokens)
-3. Deploy Token (minted to factory temporarily)
-4. Deploy LiquidityController
-5. Transfer lockedTokens to controller
-6. Initialize controller with initial liquidity (BNB + initialTokens)
-7. Store deployment record
-8. Emit TokenDeployed event
-
----
-
-# 🔹 PLU (Progressive Liquidity Unlock)
-
-unlockEpoch():
-
-- Checks if epoch has passed
-- Calculates tokens to unlock
-- Pairs tokens with BNB and adds to PancakeSwap
-- Updates epoch counter
-
----
-
-# 📈 Token Value Architecture
-
-Initial Sale:
-- Initial liquidity added at deployment
-
-Post-Deployment:
-- Tokens progressively unlocked into PancakeSwap
-
-AMM Formula:
-x * y = k
-
-Market sets price dynamically.
-
----
-
-# 🌐 Backend Layer
-
-## Stack
-
-- Runtime: Bun
-- Framework: Hono
-- Database: Bun SQLite
-- Chain client: Ethers.js v6
-
-## Responsibilities
-
-- Listen to TokenDeployed events (indexer)
-- Index deployment data into SQLite
-- Provide REST API to frontend
-- Verify milestones (when MilestoneEscrow is implemented)
-
-Backend never holds user funds.
+```mermaid
+erDiagram
+    PROJECTS {
+        int id PK
+        string name
+        string tagline
+        string logo_url
+        string website_url
+        string symbol
+        string category
+        string token_address
+        string escrow_address
+        string controller_address
+        string creator
+        string funding_goal
+        string total_raised
+        int deadline
+        string status
+        int created_at
+        int updated_at
+    }
+    MILESTONES {
+        int id PK
+        int project_id FK
+        int milestone_index
+        string description
+        string unlock_amount
+        int verified
+        int released
+        int created_at
+        int updated_at
+    }
+    CONTRIBUTIONS {
+        int id PK
+        int project_id FK
+        string contributor
+        string amount
+        string tx_hash
+        int created_at
+    }
+    SYNC_STATE {
+        string key PK
+        string value
+    }
+    PROJECTS ||--o{ MILESTONES : has
+    PROJECTS ||--o{ CONTRIBUTIONS : receives
+```
 
 ---
 
-# 🗄 Database Schema
+## Frontend Layer
 
-Projects:
-- id
-- token_address
-- escrow_address
-- creator
-- funding_goal
-- total_raised
-- deadline
-- status
-- created_at
-- updated_at
+### Stack
+| Component | Technology |
+|-----------|-----------|
+| Framework | Next.js 14 (App Router) |
+| Styling | Tailwind CSS |
+| Wallet | Wagmi + WalletConnect |
+| State | React hooks + TanStack Query |
+| Fonts | Martian Mono (headings) + Inter (body) |
 
-Milestones:
-- project_id
-- milestone_index
-- description
-- unlock_amount
-- verified
-- released
-- created_at
-- updated_at
+### Pages
+| Route | Page | Description |
+|-------|------|-------------|
+| `/` | Home | Hero, How It Works, Campaign Grid with filters |
+| `/create` | Create Campaign | 5-step wizard (Project Info → Token Config → Funding Goal → Milestones → Review & Deploy) |
+| `/campaign/[id]` | Campaign Detail | Funding progress, token purchase, milestone tracker, activity feed, founder actions |
+| `/dashboard` | User Dashboard | My investments, my campaigns |
+| `/deployments` | Deployments | List of token deployments |
+| `/admin` | Admin Panel | Milestone verification (admin-gated) |
 
-Contributions:
-- project_id
-- contributor
-- amount
-- tx_hash
-- created_at
-
-Sync State:
-- key
-- value
-
----
-
-# 🔌 Frontend → System Mapping
-
-Create Token → Factory.deployTokenV2()
-
-View Deployments → Backend API (GET /projects)
-
-View Details → Backend API (GET /project/:id)
-
-Verify Milestone → Backend → Escrow.verifyMilestone() *(when escrow exists)*
-
-Release Funds → Escrow.releaseMilestoneFunds() *(when escrow exists)*
+### Component Architecture
+```
+├── Navbar.tsx, Footer.tsx, ShrinkingFooter.tsx
+├── ConnectWalletModal.tsx
+├── home/
+│   ├── HeroSection.tsx, HowItWorksSection.tsx
+│   ├── CampaignCard.tsx, CampaignGrid.tsx, CampaignFilters.tsx
+│   └── EscrowSphere.tsx
+├── create-campaign/
+│   ├── StepIndicator.tsx
+│   ├── StepProjectInfo.tsx, StepTokenConfig.tsx
+│   ├── StepFundingGoal.tsx, StepMilestones.tsx
+│   └── StepReviewDeploy.tsx
+├── campaign/
+│   ├── CampaignHeader.tsx, FundingProgress.tsx
+│   ├── TokenInfoPanel.tsx, TokenPurchasePanel.tsx
+│   ├── MilestoneTracker.tsx, ActivityFeed.tsx
+│   ├── ProjectDescription.tsx, FounderActionStrip.tsx
+│   └── CampaignDetailLayout.tsx
+└── plu/ (PLU-related components)
+```
 
 ---
 
-# 🔐 Security Model
+## Deployed Addresses (BNB Chain Testnet)
 
-- Owner/deployer gating on controller functions
-- Epoch timing enforcement
-- Token transfer validation
-- Input validation on all config parameters
+| Contract | Address |
+|----------|---------|
+| EvolisFactory | `0x2c281243A1013A9Be20a7415ee6D0CdCd8Aae39b` |
+| Token | `0x4762610940Ad0aA5Aa7c6911E8EE690f8BDc2ed7` |
+| EvolisPool | `0xc956ccb7E961FDE8689f54895F6c67e4E44C05F8` |
+| LiquidityController | `0x3DCB43994B3e03b40F8FFba12a9950D1c968d761` |
 
----
-
-# ⚠️ Milestone Escrow: Not Yet Implemented
-
-The milestone-gated escrow system (contribute, refund, verifyMilestone, releaseMilestoneFunds) described in the project vision is NOT yet implemented as a contract. The current contracts cover token deployment and PLU only.
-
-Required to complete the vision:
-- MilestoneEscrow contract
-- Factory integration to deploy escrow alongside token + controller
-
----
-
-# 🏁 Final Architecture Statement
-
-Tokens are atomically deployed with progressive liquidity.
-Liquidity is market-driven via AMM.
-Milestone accountability is planned but not yet on-chain.
+**Explorer:** [BscScan Testnet](https://testnet.bscscan.com/address/0x2c281243A1013A9Be20a7415ee6D0CdCd8Aae39b)
