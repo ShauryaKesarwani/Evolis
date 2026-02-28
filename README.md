@@ -38,84 +38,93 @@ Backers get token upside with strict refund protection if goals aren't met or fo
 
 Evolis is built for users, functioning intuitively to abstract away the complexity of smart-contract operations.
 
-*[Insert User Journey Image Here]*
 
-<details>
 <summary>View User Journey Mermaid Diagram Source</summary>
 
 ```mermaid
-journey
-    title Evolis Protocol: Founder & Supporter Flow
-    section Campaign Creation
-      Connect Wallet: 5: Founder
-      Set Bonding Curve & Milestones: 5: Founder
-      Deploy to BNB Chain: 5: Founder
-    section Funding Phase
-      Browse Campaigns: 5: Supporter
-      Buy Tokens (Bonding Curve): 5: Supporter
-      Funds Locked in Escrow: 5: Protocol
-    section Outcome Handling
-      Goal Reached?: 5: Protocol
-      Refund Users (If Failed): 4: Supporter
-      Release 50% to Founder & PLU: 5: Founder
-    section Post-Funding
-      Submit Milestone Proof: 5: Founder
-      Verify & Release Capital: 4: Admin
-      Progressive Liquidity Unlocks: 5: Protocol
+graph TD
+    %% Nodes
+    Founder[🚀 Founder<br/>Creates Campaign]
+    Backer[💰 Backer<br/>Funds Project]
+    Platform[🖥️ Evolis Platform]
+    Escrow[🔒 Escrow<br/>Locked on BNB Chain]
+    Voting[🗳️ Community Vote<br/>Token Holders Decide]
+    Locked[🔐 Funds Stay Locked<br/>Backers Protected]
+
+    %% Interactions
+    Founder -->|1. Creates Campaign| Platform
+    Backer -->|2. Funds Project| Platform
+
+    Platform -->|Locks Funds| Escrow
+    Platform -->|Opens Vote| Voting
+
+    Founder -->|3. Submits Proof| Voting
+    Voting -->|4. Approved ✅| Escrow
+    Escrow -->|5. Releases Funds| Founder
+
+    Voting -->|4. Rejected ❌| Locked
+
+    %% Styling
+    classDef person fill:#FFE66D,stroke:#111,stroke-width:3px,color:#111
+    classDef platformStyle fill:#FCFAF6,stroke:#111,stroke-width:3px,color:#111
+    classDef chain fill:#F7931A,stroke:#111,stroke-width:3px,color:#111
+    classDef safe fill:#68A063,stroke:#111,stroke-width:3px,color:#fff
+
+    class Founder,Backer person
+    class Platform platformStyle
+    class Escrow,Voting chain
+    class Locked safe
 ```
-</details>
+
 
 ## 🏗 System Architecture (Technical Implementation & Code Quality)
 
 We build for users, not just judges. Below is our complete, transparent, and labeled architecture breakdown showing modules, data flow, and tech stack.
 
-*[Insert Architecture Image Here]*
-
-<details>
 <summary>View System Architecture Mermaid Diagram Source</summary>
 
 ```mermaid
 graph TD
-    %% Styling
-    classDef frontend fill:#000,stroke:#333,stroke-width:2px,color:#fff
-    classDef backend fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#000
-    classDef contract fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#000
+    classDef user fill:#FFE66D,stroke:#111,stroke-width:2px,color:#111
+    classDef frontend fill:#1a1a1a,stroke:#444,stroke-width:2px,color:#fff
+    classDef backend fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#111
+    classDef contract fill:#fef08a,stroke:#ca8a04,stroke-width:2px,color:#111
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#111
 
-    %% Frontend Layer
-    subgraph "Frontend Layer (Design & Usability)"
-        UI["Next.js 14 UI<br/>(Tailwind CSS)"]:::frontend
-        Wagmi["Wagmi / Ethers.js<br/>(WalletConnect)"]:::frontend
-        UI <--> Wagmi
+    Founder("🚀 Founder"):::user
+    Backer("💰 Backer"):::user
+
+    subgraph FE["🖥️ Frontend"]
+        UI["Next.js + Tailwind"]:::frontend
+        Hooks["Wagmi + Viem"]:::frontend
+        UI <--> Hooks
     end
 
-    %% Backend Layer
-    subgraph "Backend Layer (Indexing & API)"
-        Hono["Bun + Hono API<br/>(:3001)"]:::backend
-        Scanner["Chain Indexer<br/>(Background Task)"]:::backend
-        DB[(SQLite DB)]:::backend
-        Hono --> DB
-        Scanner --> DB
+    subgraph BE["🖧 Backend"]
+        API["Bun + Hono REST API"]:::backend
+        Indexer["Chain Event Indexer"]:::backend
+        DB[("MongoDB")]:::storage
+        API --> DB
+        Indexer --> DB
     end
 
-    %% Smart Contracts
-    subgraph "BNB Chain Ecosystem (Technical Implementation)"
-        Factory["EvolisFactory<br/>(Campaign Registry)"]:::contract
-        Pool["EvolisPool<br/>(Escrow & Bonding Curve)"]:::contract
-        Token["Project ERC-20 Token"]:::contract
-        PLU["LiquidityController<br/>(Progressive Unlocks)"]:::contract
+    subgraph SC["⛓️ BNB Chain"]
+        Factory["EvolisFactory.sol"]:::contract
+        Pool["EvolisPool.sol<br/>Escrow + Bonding Curve"]:::contract
+        Voting["VotingModule.sol"]:::contract
+        PLU["LiquidityController.sol"]:::contract
+
+        Factory -->|Deploys| Pool
+        Voting -->|Triggers| PLU
     end
 
-    %% Connections
-    UI <-->|REST API Fetch| Hono
-    Scanner -->|Poll Events| Factory
-    Wagmi -->|Deploy & Transact| Factory
-    Wagmi -->|Buy / Refund| Pool
-    Factory --> Pool
-    Factory --> Token
-    Factory --> PLU
-    Pool -->|Triggers Unlocks| PLU
+    Founder & Backer -->|Interact| UI
+    Hooks -->|Transactions| Factory
+    Hooks -->|Buy / Vote| Pool & Voting
+    UI <-->|REST Calls| API
+    Factory & Voting & PLU -.->|Events| Indexer
 ```
-</details>
+
 
 > [!IMPORTANT]
 > **Clean Technical Implementation:** Our Next.js interface communicates with a fast, lightweight Bun+Hono component for sub-second UI index tracking, while all fundamental rules live verifiably on-chain via the `EvolisPool` and `LiquidityController`.
