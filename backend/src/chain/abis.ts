@@ -6,7 +6,7 @@ export const factoryAbi = [
   'function deployTokenV2(tuple(string name, string symbol, uint256 totalSupply, uint256 initialLiquidityPercent, uint256 unlockDuration, uint256 epochDuration, address router) config) external payable returns (address tokenAddr, address controllerAddr)',
 
   // Read
-  'function getDeployment(uint256 index) view returns (tuple(address token, address controller, address owner, uint256 timestamp, uint256 totalSupply, uint256 initialTokens, uint256 lockedTokens))',
+  'function getDeployment(uint256 index) view returns (tuple(address token, address controller, address pool, address owner, uint256 timestamp, uint256 totalSupply, uint256 bondingSupply, uint256 lockedTokens))',
   'function getTotalDeployments() view returns (uint256)',
   'function getUserDeployments(address user) view returns (address[])',
 ] as const

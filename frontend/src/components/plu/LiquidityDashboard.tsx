@@ -95,10 +95,15 @@ export default function LiquidityDashboard({ controllerAddress }: { controllerAd
       );
       if (!liquidityUnlockedEvent) return;
 
+      const currentBlock = await publicClient.getBlockNumber();
+      // Fetch only the last 5000 blocks to avoid RPC limit exceeded errors
+      // In production, an indexer would keep track of the last processed block
+      const fromBlock = currentBlock > BigInt(5000) ? currentBlock - BigInt(5000) : BigInt(0);
+
       const logs = await publicClient.getLogs({
         address: controllerAddress as `0x${string}`,
         event: liquidityUnlockedEvent as any,
-        fromBlock: BigInt(0),
+        fromBlock: fromBlock,
         toBlock: 'latest'
       });
 
@@ -261,7 +266,7 @@ export default function LiquidityDashboard({ controllerAddress }: { controllerAd
         </div>
 
         {/* Manual Liquidity Addition */}
-        <div className="bg-white border border-[#111111]/10 rounded-2xl p-6 md:p-8 relative">
+        <div className="bg-white border border-[#111111]/10 rounded-2xl p-6 md:p-8 relative group hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all">
           <h3 className={`${martianMono.className} text-lg font-bold mb-4 text-[#111111]`}>Manual Liquidity Addition</h3>
           {balanceError ? (
             <div className="bg-orange-50 border border-orange-200 rounded-xl p-4">

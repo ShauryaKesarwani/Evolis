@@ -41,7 +41,7 @@ export default function TokenPurchasePanel({ tokenSymbol, tokenPriceBNB, userBal
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 lg:p-8 border-2 border-[#111111] shadow-[8px_8px_0px_#111111] space-y-6">
+    <div className="bg-[#FCFAF6] rounded-3xl p-6 lg:p-8 border-2 border-[#111111] shadow-[8px_8px_0px_#111111] space-y-6 group hover:border-[#b5e315] hover:shadow-[8px_8px_0px_#b5e315] transition-all duration-300">
       <div className="flex justify-between items-center mb-2">
         <h3 className="font-mono text-2xl font-bold text-[#111111]">Support Project</h3>
         <span className="text-xs font-bold bg-[#111111]/5 px-3 py-1.5 rounded-full text-[#111111] border border-[#111111]/10 uppercase tracking-widest">

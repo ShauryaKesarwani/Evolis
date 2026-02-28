@@ -19,8 +19,9 @@ export default function StepTokenConfig({ data, updateData }: StepTokenConfigPro
       </div>
 
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
+        <div className="bg-white rounded-2xl border border-[#111111]/10 p-6 shadow-sm hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
             <label className="block text-sm font-bold mb-2">Token Name *</label>
             <input
               type="text"
@@ -117,6 +118,7 @@ export default function StepTokenConfig({ data, updateData }: StepTokenConfigPro
               title={`Treasury: ${data.treasuryPercentage}%`}
             />
           </div>
+        </div>
         </div>
       </div>
     </div>

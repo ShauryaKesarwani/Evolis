@@ -20,7 +20,7 @@ export default function StepFundingGoal({ data, updateData }: StepFundingGoalPro
         <p className="text-[#111111]/70 mb-6">Set your fundraising target and campaign duration.</p>
       </div>
 
-      <div className="space-y-6">
+      <div className="space-y-6 bg-white rounded-2xl border border-[#111111]/10 p-6 shadow-sm hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
         <div>
           <label className="block text-sm font-bold mb-2">Funding Goal (BNB) *</label>
           <div className="relative">

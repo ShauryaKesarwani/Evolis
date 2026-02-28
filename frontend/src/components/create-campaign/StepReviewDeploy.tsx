@@ -20,7 +20,7 @@ export default function StepReviewDeploy({ data, isWalletConnected, onDeploy, on
         <p className="text-[#111111]/70 mb-6">Verify your campaign details before deploying the smart contracts to the BNB Chain.</p>
       </div>
 
-      <div className="bg-[#FCFAF6] border border-[#111111]/10 rounded-2xl p-6 md:p-8 space-y-8">
+      <div className="bg-[#FCFAF6] border border-[#111111]/10 rounded-2xl p-6 md:p-8 space-y-8 hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
         
         {/* Project Section */}
         <section>

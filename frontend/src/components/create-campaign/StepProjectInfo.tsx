@@ -14,7 +14,7 @@ export default function StepProjectInfo({ data, updateData }: StepProjectInfoPro
         <p className="text-[#111111]/70 mb-6">Tell us about your project. This will be visible on your public campaign page.</p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 bg-white rounded-2xl border border-[#111111]/10 p-6 shadow-sm hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
         <div>
           <label className="block text-sm font-bold mb-2">Project Name *</label>
           <input

@@ -35,7 +35,7 @@ export default function MilestoneTracker({ milestones }: MilestoneTrackerProps) 
   };
 
   return (
-    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8">
+    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8 group hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
       <h3 className="font-mono text-2xl font-bold text-[#111111] mb-8">Funding Milestones</h3>
       
       <div className="relative border-l-2 border-[#111111]/10 ml-4 space-y-12 pb-4">

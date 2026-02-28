@@ -5,13 +5,35 @@ import { getProject, upsertProject } from './db'
 export async function startIndexer() {
   const env = getEnv()
   if (!env.RPC_URL || !env.FACTORY_ADDRESS) {
-    console.warn('Indexer disabled: RPC_URL or FACTORY_ADDRESS missing')
+    console.warn('[indexer] disabled: RPC_URL or FACTORY_ADDRESS missing')
     return
   }
 
   console.log('[indexer] starting — using direct contract call strategy')
 
+  // Validate factory contract is reachable before entering polling loop
+  try {
+    const factory = getFactoryContract()
+    const total = Number(await factory.getTotalDeployments())
+    console.log(`[indexer] factory validated — ${total} deployment(s) found`)
+  } catch (err: any) {
+    console.warn(
+      `[indexer] ⚠️  Factory contract at ${env.FACTORY_ADDRESS} is not responding.`
+    )
+    console.warn(
+      `[indexer]    Error: ${err.message?.split('(')[0]?.trim() || err.message}`
+    )
+    console.warn(
+      '[indexer]    The contract may not be deployed on this network. Indexer will not start.'
+    )
+    console.warn(
+      '[indexer]    Deploy TokenFactory to BNB Testnet and update FACTORY_ADDRESS in .env'
+    )
+    return
+  }
+
   // Polling loop: every cycle, check getTotalDeployments() and sync any new ones.
+  let consecutiveErrors = 0
   while (true) {
     try {
       const factory = getFactoryContract()
@@ -35,8 +57,15 @@ export async function startIndexer() {
           await sleep(500)
         }
       }
+      consecutiveErrors = 0
     } catch (err: any) {
-      console.warn('[indexer] poll error:', err.message)
+      consecutiveErrors++
+      if (consecutiveErrors <= 3) {
+        console.warn('[indexer] poll error:', err.message)
+      }
+      if (consecutiveErrors === 3) {
+        console.warn('[indexer] Too many consecutive errors, suppressing further logs until recovery.')
+      }
     }
 
     // Poll every 10 seconds

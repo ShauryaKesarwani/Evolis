@@ -38,18 +38,27 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
 
   const raisedNum = projectData ? Number(projectData.total_raised || 0) / 1e18 : 0;
   const targetNum = projectData ? Number(projectData.funding_goal || 0) / 1e18 : 5000;
-  const daysRemaining = projectData?.deadline 
-    ? Math.max(0, Math.ceil((projectData.deadline * 1000 - Date.now()) / (1000 * 60 * 60 * 24)))
-    : 14;
+  
+  let daysRemaining = 14;
+  if (projectData?.deadline) {
+    const deadlineNum = Number(projectData.deadline);
+    if (deadlineNum > 4102444800) { // Year 2100 limit, prevents extreme numbers
+      daysRemaining = 14;
+    } else {
+      daysRemaining = Math.max(0, Math.ceil((deadlineNum * 1000 - Date.now()) / (1000 * 60 * 60 * 24)));
+    }
+  }
 
   const campaign = {
-    name: projectData ? `Project #${projectData.id}` : "zkBNB Identity Protocol",
-    tagline: "A decentralized milestone-based funding project built on BNB Chain.",
+    name: projectData?.name || `Project #${projectData?.id ?? campaignId}`,
+    tagline: projectData?.tagline || "A decentralized milestone-based funding project built on BNB Chain.",
     status: (projectData?.status || 'Active') as any,
     amountRaised: raisedNum,
     fundingGoal: targetNum,
     daysRemaining,
-    description: "The zkBNB Identity Protocol is the foundational privacy layer for the BNB ecosystem. By utilizing advanced zero-knowledge rollups, we allow users to prove their identity, compliance status, and on-chain history without revealing their actual data.\n\nIncubated during the Binance Labs Season 7 Incubation Program, our technology is already being integrated into major BNB Chain DeFi protocols.\n\nFunds from this milestone campaign will be used to finalize the mainnet smart contracts, complete our tier-1 security audits, and subsidize gas for the first 100,000 user identity mints.",
+    description: projectData?.tagline
+      ? `${projectData.tagline}\n\nThis project is built on BNB Chain with milestone-based funding and progressive liquidity unlocks. Funds are released as verified milestones are completed, ensuring accountability and transparency for all contributors.`
+      : "A decentralized milestone-based funding project built on BNB Chain. Funds are released as verified milestones are completed, ensuring accountability and transparency for all contributors.",
     team: [
       { name: "Creator", role: creatorAddress }
     ],
@@ -58,8 +67,8 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
   };
 
   const token = {
-    name: projectData?.token_address ? `Token ${projectData.token_address.slice(0, 6)}` : "ZKID",
-    symbol: "TKN",
+    name: projectData?.name || (projectData?.token_address ? `Token ${projectData.token_address.slice(0, 6)}` : "Token"),
+    symbol: projectData?.symbol || "TKN",
     priceBNB: 0.005,
     totalSupply: 1000000000,
     allocations: [

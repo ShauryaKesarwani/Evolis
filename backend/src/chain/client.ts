@@ -35,6 +35,7 @@ export async function fetchProjectFromChain(projectId: number) {
   // Ethers v6 structs come back as both array + named keys.
   const token = meta.token as string
   const controller = meta.controller as string
+  const pool = meta.pool as string
   const owner = meta.owner as string
   const totalSupply = (meta.totalSupply as bigint).toString()
   const timestamp = Number(meta.timestamp as bigint)
@@ -43,11 +44,11 @@ export async function fetchProjectFromChain(projectId: number) {
     id: projectId,
     name: null,
     token_address: token,
-    escrow_address: controller, // controller mapped to escrow_address column for now
+    escrow_address: pool || controller, // Use pool address if available, fallback to controller
     controller_address: controller,
     creator: owner,
     funding_goal: totalSupply, // placeholder: no funding goal in current contract
-    total_raised: null, // Always null: current contracts have no contribution/funding mechanism. Needs MilestoneEscrow.
+    total_raised: null,
     deadline: timestamp, // using deployment timestamp; no deadline in current contract
     status: 'ACTIVE',
   }

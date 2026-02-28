@@ -15,7 +15,7 @@ interface ActivityFeedProps {
 
 export default function ActivityFeed({ supporterCount, tokensDistributed, activities }: ActivityFeedProps) {
   return (
-    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8 space-y-8">
+    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8 space-y-8 group hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
       {/* Social Proof Stats */}
       <div className="grid grid-cols-2 gap-6 md:gap-8 pb-8 border-b-2 border-[#111111]/10">
         <div>

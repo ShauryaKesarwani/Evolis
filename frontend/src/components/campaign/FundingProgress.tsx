@@ -7,10 +7,11 @@ interface FundingProgressProps {
 }
 
 export default function FundingProgress({ amountRaised, fundingGoal, daysRemaining }: FundingProgressProps) {
-  const progressPercent = Math.min(100, Math.round((amountRaised / fundingGoal) * 100));
+  const safeFundingGoal = fundingGoal > 0 ? fundingGoal : 1; // Prevent division by zero
+  const progressPercent = Math.min(100, Math.round((amountRaised / safeFundingGoal) * 100));
   
   return (
-    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8 space-y-6">
+    <div className="bg-white border-2 border-[#111111]/10 rounded-2xl p-6 lg:p-8 space-y-6 group hover:border-[#b5e315] hover:shadow-[4px_4px_0px_#b5e315] transition-all duration-300">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4 mb-2">
         <div>
           <h2 className="text-[#111111]/60 font-bold uppercase tracking-widest text-sm mb-1">Total Raised</h2>
