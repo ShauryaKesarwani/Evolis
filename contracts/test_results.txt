@@ -1,0 +1,47 @@
+No files changed, compilation skipped
+
+Ran 3 tests for test/Integration.t.sol:IntegrationTest
+[PASS] testCompleteTokenLifecycle() (gas: 2896812)
+[PASS] testHighVolumeTrading() (gas: 2753502)
+[PASS] testMultipleUserDeployments() (gas: 5253872)
+Suite result: ok. 3 passed; 0 failed; 0 skipped; finished in 8.15ms (6.47ms CPU time)
+
+Ran 12 tests for test/TokenFactory.t.sol:TokenFactoryTest
+[PASS] testCannotUnlockBeforeEpochReady() (gas: 2642581)
+[PASS] testDeployToken() (gas: 2643716)
+[PASS] testEpochProgressAfterUnlock() (gas: 2687999)
+[PASS] testEpochUnlockAfterTimeProgression() (gas: 2636615)
+[PASS] testEpochUnlockBasics() (gas: 2636495)
+[PASS] testEpochUnlockRequiresETH() (gas: 2636313)
+[PASS] testGetUserDeployments() (gas: 5216160)
+[PASS] testInvalidConfiguration() (gas: 21268)
+[PASS] testMultipleEpochUnlock() (gas: 2686217)
+[PASS] testTimeUntilNextEpoch() (gas: 2638139)
+[PASS] testUnlockAllEpochs() (gas: 2694387)
+[PASS] testUnlockProgressTracking() (gas: 2717396)
+Suite result: ok. 12 passed; 0 failed; 0 skipped; finished in 8.08ms (7.78ms CPU time)
+
+Ran 12 tests for test/LiquidityControllerSelfTriggering.t.sol:LiquidityControllerSelfTriggeringTest
+[PASS] testAutoUnlockOnCheckAndUnlock() (gas: 82409)
+[PASS] testAutoUnlockOnReceiveETH() (gas: 89173)
+[PASS] testAutoUnlockOnStatusCall() (gas: 82576)
+[PASS] testAutoUnlockOnViewFunctionCall() (gas: 82352)
+[PASS] testAutoUnlockWithoutExternalService() (gas: 120580)
+[FAIL: All 30 epochs auto-unlocked: 28 != 30] testCompleteLifecycleAuto() (gas: 430163)
+[PASS] testDepositETHTriggersUnlock() (gas: 90112)
+[PASS] testManualUnlockAsOwner() (gas: 83763)
+[PASS] testMultipleDaysAutoUnlock() (gas: 83371)
+[PASS] testNoUnlockIfNotTimeYet() (gas: 10281)
+[PASS] testProgressAutoUpdates() (gas: 81537)
+[PASS] testViewFunctionsNoAutoTrigger() (gas: 21546)
+Suite result: FAILED. 11 passed; 1 failed; 0 skipped; finished in 8.04ms (3.10ms CPU time)
+
+Ran 3 test suites in 162.34ms (24.27ms CPU time): 26 tests passed, 1 failed, 0 skipped (27 total tests)
+
+Failing tests:
+Encountered 1 failing test in test/LiquidityControllerSelfTriggering.t.sol:LiquidityControllerSelfTriggeringTest
+[FAIL: All 30 epochs auto-unlocked: 28 != 30] testCompleteLifecycleAuto() (gas: 430163)
+
+Encountered a total of 1 failing tests, 26 tests succeeded
+
+Tip: Run `forge test --rerun` to retry only the 1 failed test

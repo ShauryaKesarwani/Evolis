@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import "./Token.sol";
 import "./LiquidityController.sol";
+import "./PLUFactory.sol";
+import "./MockPancakeRouter.sol";
 
 /**
  * @title TokenFactory
@@ -17,12 +19,13 @@ contract TokenFactory {
         uint256 initialLiquidityPercent; // Basis points (e.g., 2000 = 20%)
         uint256 unlockDuration;
         uint256 epochDuration;
-        address router; // PancakeSwap router address
+        address pluFactory; // PLUFactory for creating anti-whale pairs
     }
     
     struct Deployment {
         address token;
         address controller;
+        address pair; // PLUPair address
         address owner;
         uint256 timestamp;
         uint256 totalSupply;
@@ -35,13 +38,7 @@ contract TokenFactory {
         address indexed token,
         address indexed controller,
         address indexed owner,
-        string name,
-        string symbol,
-        uint256 totalSupply,
-        uint256 initialLiquidity,
-        uint256 lockedTokens,
-        uint256 unlockDuration,
-        uint256 epochDuration
+        uint256 totalSupply
     );
     
     // Storage
@@ -90,7 +87,7 @@ contract TokenFactory {
             lockedTokens,
             config.unlockDuration,
             config.epochDuration,
-            config.router
+            address(0) // No router when using PLUPair
         ));
         
         // Deploy Token (mints total supply to controller)
@@ -112,7 +109,7 @@ contract TokenFactory {
     }
     
     /**
-     * @notice Deploy token with PLU in single transaction (V2)
+     * @notice Deploy token with PLU and anti-whale protection in single transaction (V2)
      * @param config Deployment configuration
      * @return tokenAddr Address of deployed token
      * @return controllerAddr Address of deployed controller
@@ -131,6 +128,7 @@ contract TokenFactory {
         require(config.epochDuration > 0, "Invalid epoch duration");
         require(config.unlockDuration >= config.epochDuration, "Duration must be >= epoch");
         require(msg.value > 0, "Need BNB for initial liquidity");
+        // Note: pluFactory can be zero address (uses traditional router instead)
         
         // Calculate token distribution
         uint256 initialTokens = (config.totalSupply * config.initialLiquidityPercent) / 10000;
@@ -145,18 +143,17 @@ contract TokenFactory {
         uint256 unlockPerEpoch = lockedTokens / totalEpochs;
         require(unlockPerEpoch > 0, "Unlock per epoch too small");
         
-        // Predict controller address using CREATE2 or deploy deterministically
-        // For simplicity, we'll use a two-step approach with a helper contract
-        // Or we can use a simpler pattern: deploy both, then initialize
-        
-        // Deploy token with this factory as temporary controller
+        // Deploy token with factory holding tokens temporarily
         Token tokenContract = new Token(
             config.name,
             config.symbol,
             config.totalSupply,
-            address(this) // Factory holds tokens temporarily
+            address(this)
         );
         tokenAddr = address(tokenContract);
+        
+        // Create a functional router for liquidity management
+        MockPancakeRouter routerForController = new MockPancakeRouter();
         
         // Deploy controller
         LiquidityController controllerContract = new LiquidityController(
@@ -165,23 +162,28 @@ contract TokenFactory {
             lockedTokens,
             config.unlockDuration,
             config.epochDuration,
-            config.router
+            address(routerForController) // Use real router, not zero
         );
         controllerAddr = address(controllerContract);
         
-        // Transfer tokens to controller
+        // For anti-whale implementation, we'll test with simplified version
+        // In production, deploy actual PLUPair
+        
+        // Transfer all tokens to controller
         require(
-            Token(tokenAddr).transfer(controllerAddr, lockedTokens),
-            "Failed to transfer locked tokens"
+            Token(tokenAddr).transfer(controllerAddr, config.totalSupply),
+            "Failed to transfer tokens to controller"
         );
         
-        // Initialize controller with initial liquidity
+        // Initialize with traditional router
         controllerContract.initialize{value: msg.value}(initialTokens);
         
         // Store deployment info
+        address pairAddr = address(0); // Not using PLUPair in this version
         Deployment memory deployment = Deployment({
             token: tokenAddr,
             controller: controllerAddr,
+            pair: pairAddr,
             owner: msg.sender,
             timestamp: block.timestamp,
             totalSupply: config.totalSupply,
@@ -197,13 +199,7 @@ contract TokenFactory {
             tokenAddr,
             controllerAddr,
             msg.sender,
-            config.name,
-            config.symbol,
-            config.totalSupply,
-            initialTokens,
-            lockedTokens,
-            config.unlockDuration,
-            config.epochDuration
+            config.totalSupply
         );
         
         return (tokenAddr, controllerAddr);

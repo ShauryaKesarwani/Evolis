@@ -3,11 +3,13 @@ pragma solidity ^0.8.20;
 
 import "forge-std/Script.sol";
 import "../src/TokenFactory.sol";
+import "../src/PLUFactory.sol";
 
 contract DeployToken is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         address factoryAddress = vm.envAddress("FACTORY_ADDRESS");
+        address pluFactoryAddress = vm.envAddress("PLU_FACTORY");
         
         vm.startBroadcast(deployerPrivateKey);
         
@@ -21,7 +23,7 @@ contract DeployToken is Script {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            router: 0x5FbDB2315678afecb367f032d93F642f64180aa3 // Mock router for Anvil
+            pluFactory: pluFactoryAddress // Use PLU_FACTORY from env
         });
         
         // Deploy with 0.1 BNB for initial liquidity
