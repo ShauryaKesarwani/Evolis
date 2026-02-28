@@ -5,17 +5,17 @@ import "forge-std/Test.sol";
 import "../src/TokenFactory.sol";
 import "../src/Token.sol";
 import "../src/LiquidityController.sol";
-import "../src/PLUFactory.sol";
+import "../src/EvolisFactory.sol";
 import "../src/PLUPair.sol";
 
 contract TokenFactoryTest is Test {
     TokenFactory public factory;
-    PLUFactory public pluFactory;
+    EvolisFactory public evolisFactory;
     address public user = address(0x1);
     
     function setUp() public {
         factory = new TokenFactory();
-        pluFactory = new PLUFactory();
+        evolisFactory = new EvolisFactory();
         vm.deal(user, 100 ether);
     }
     
@@ -29,7 +29,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0) // Use PLUFactory
+            evolisFactory: address(0) // Use PLUFactory
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -65,7 +65,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 10001,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         vm.expectRevert("Invalid liquidity %");
@@ -84,7 +84,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr1,) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -110,7 +110,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000, // 20% initial = 200k tokens
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -138,7 +138,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -167,7 +167,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -202,7 +202,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -234,7 +234,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -269,7 +269,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -307,7 +307,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -330,7 +330,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);
@@ -379,7 +379,7 @@ contract TokenFactoryTest is Test {
             initialLiquidityPercent: 2000,
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 0.1 ether}(config);

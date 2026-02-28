@@ -54,7 +54,7 @@ contract RealDeploymentTest is Test {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0) // Use traditional router
+            evolisFactory: address(0) // Use traditional router
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 10 ether}(config);
@@ -217,7 +217,7 @@ contract RealDeploymentTest is Test {
             initialLiquidityPercent: 2500, // 25%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address token1Addr, address controller1Addr) = factory.deployTokenV2{value: 5 ether}(config1);
@@ -237,7 +237,7 @@ contract RealDeploymentTest is Test {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address token2Addr, address controller2Addr) = factory.deployTokenV2{value: 3 ether}(config2);
@@ -273,7 +273,7 @@ contract RealDeploymentTest is Test {
             initialLiquidityPercent: 1000, // 10%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 50 ether}(config);

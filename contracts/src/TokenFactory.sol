@@ -3,13 +3,15 @@ pragma solidity ^0.8.20;
 
 import "./Token.sol";
 import "./LiquidityController.sol";
-import "./PLUFactory.sol";
+import "./EvolisFactory.sol";
+import "./EvolisPool.sol";
 import "./MockPancakeRouter.sol";
 
 /**
  * @title TokenFactory
- * @notice Atomically deploys token + liquidity controller with PLU
- * @dev Single transaction creates entire system with initial liquidity
+ * @notice Atomically deploys token + EvolisPool + liquidity controller
+ * @dev Single transaction creates entire milestone-based crowdfunding system
+ *      Replaces PLU system with EvolisPool for PROJECT_PLAN.md compliance
  */
 contract TokenFactory {
     struct DeploymentConfig {
@@ -19,18 +21,34 @@ contract TokenFactory {
         uint256 initialLiquidityPercent; // Basis points (e.g., 2000 = 20%)
         uint256 unlockDuration;
         uint256 epochDuration;
-        address pluFactory; // PLUFactory for creating anti-whale pairs
+        address evolisFactory; // EvolisFactory for creating crowdfunding pools
+    }
+    
+    struct EvolisDeploymentConfig {
+        string tokenName;
+        string tokenSymbol;
+        uint256 totalSupply;
+        uint256 bondingSupply;          // Tokens for fundraising sale
+        uint256 bondingInitialPrice;    // Starting price (0 for fixed: 0.001 ether = 1 BNB per 1000 tokens)
+        uint256 bondingSlope;           // 0 for fixed price
+        uint256 fundingGoal;            // BNB goal (after fees)
+        uint256 fundraiseDeadline;      // Fundraise deadline (timestamp)
+        uint256 milestoneDeadline;      // Milestone proof deadline (timestamp)
+        uint256 unlockDuration;         // Progressive unlock duration
+        uint256 epochDuration;          // Epoch duration for unlocks
+        string lpName;                  // EvoLP name
+        string lpSymbol;                // EvoLP symbol
     }
     
     struct Deployment {
         address token;
         address controller;
-        address pair; // PLUPair address
+        address pool; // EvolisPool address (replaces pair)
         address owner;
         uint256 timestamp;
         uint256 totalSupply;
-        uint256 initialTokens;
-        uint256 lockedTokens;
+        uint256 bondingSupply; // Tokens for fundraising
+        uint256 lockedTokens;  // Tokens for progressive unlock
     }
     
     // Events
@@ -41,10 +59,128 @@ contract TokenFactory {
         uint256 totalSupply
     );
     
+    event EvolisSystemDeployed(
+        address indexed token,
+        address indexed pool,
+        address indexed controller,
+        address owner,
+        uint256 fundingGoal,
+        uint256 deadline
+    );
+    
     // Storage
     Deployment[] public deployments;
     mapping(address => address[]) public userDeployments;
     mapping(address => Deployment) public deploymentInfo;
+    
+    /**
+     * @notice Deploy complete EvolisPool fundraising system in single transaction
+     * @param config EvolisDeploymentConfig parameters
+     * @return tokenAddr Address of deployed token
+     * @return poolAddr Address of deployed EvolisPool
+     * @return controllerAddr Address of deployed LiquidityController
+     */
+    function deployEvolisSystem(EvolisDeploymentConfig memory config) 
+        external 
+        returns (address tokenAddr, address poolAddr, address controllerAddr) 
+    {
+        // Validate inputs
+        require(bytes(config.tokenName).length > 0, "Invalid token name");
+        require(bytes(config.tokenSymbol).length > 0, "Invalid token symbol");
+        require(config.totalSupply > 0, "Invalid total supply");
+        require(config.bondingSupply <= config.totalSupply, "Bonding supply > total");
+        require(config.fundingGoal > 0, "Invalid funding goal");
+        require(config.fundraiseDeadline > block.timestamp, "Deadline must be future");
+        require(config.milestoneDeadline > config.fundraiseDeadline, "Milestone after fundraise");
+        require(config.unlockDuration > 0, "Invalid unlock duration");
+        require(config.epochDuration > 0, "Invalid epoch duration");
+        
+        // Calculate token distribution
+        uint256 lockedTokens = config.totalSupply - config.bondingSupply;
+        
+        // Deploy token with factory holding tokens temporarily
+        Token tokenContract = new Token(
+            config.tokenName,
+            config.tokenSymbol,
+            config.totalSupply,
+            address(this)
+        );
+        tokenAddr = address(tokenContract);
+        
+        // Deploy router for liquidity management
+        MockPancakeRouter routerForController = new MockPancakeRouter();
+        
+        // Deploy LiquidityController
+        LiquidityController controllerContract = new LiquidityController(
+            tokenAddr,
+            msg.sender,
+            lockedTokens,
+            config.unlockDuration,
+            config.epochDuration,
+            address(routerForController)
+        );
+        controllerAddr = address(controllerContract);
+        
+        // Deploy EvolisPool via factory
+        EvolisFactory factory = new EvolisFactory();
+        
+        EvolisFactory.PoolConfig memory poolConfig = EvolisFactory.PoolConfig({
+            lpName: config.lpName,
+            lpSymbol: config.lpSymbol,
+            projectToken: tokenAddr,
+            projectOwner: msg.sender,
+            bondingSupply: config.bondingSupply,
+            bondingInitialPrice: config.bondingInitialPrice,
+            bondingSlope: config.bondingSlope,
+            fundingGoal: config.fundingGoal,
+            deadline: config.fundraiseDeadline,
+            milestoneDeadline: config.milestoneDeadline
+        });
+        
+        poolAddr = factory.createPool(poolConfig);
+        
+        // Transfer bonding supply to pool
+        require(
+            tokenContract.transfer(poolAddr, config.bondingSupply),
+            "Failed to transfer bonding supply"
+        );
+        
+        // Transfer locked tokens to controller
+        require(
+            tokenContract.transfer(controllerAddr, lockedTokens),
+            "Failed to transfer locked tokens"
+        );
+        
+        // Link controller to pool via factory (required by EvolisPool.onlyFactory)
+        factory.setPoolController(poolAddr, controllerAddr);
+        
+        // Store deployment info
+        Deployment memory deployment = Deployment({
+            token: tokenAddr,
+            controller: controllerAddr,
+            pool: poolAddr,
+            owner: msg.sender,
+            timestamp: block.timestamp,
+            totalSupply: config.totalSupply,
+            bondingSupply: config.bondingSupply,
+            lockedTokens: lockedTokens
+        });
+        
+        deployments.push(deployment);
+        userDeployments[msg.sender].push(tokenAddr);
+        deploymentInfo[tokenAddr] = deployment;
+        
+        emit EvolisSystemDeployed(
+            tokenAddr,
+            poolAddr,
+            controllerAddr,
+            msg.sender,
+            config.fundingGoal,
+            config.fundraiseDeadline
+        );
+        
+        return (tokenAddr, poolAddr, controllerAddr);
+    }
     
     /**
      * @notice Deploy token with PLU in single transaction
@@ -179,15 +315,14 @@ contract TokenFactory {
         controllerContract.initialize{value: msg.value}(initialTokens);
         
         // Store deployment info
-        address pairAddr = address(0); // Not using PLUPair in this version
         Deployment memory deployment = Deployment({
             token: tokenAddr,
             controller: controllerAddr,
-            pair: pairAddr,
+            pool: address(0), // Not using EvolisPool in legacy version
             owner: msg.sender,
             timestamp: block.timestamp,
             totalSupply: config.totalSupply,
-            initialTokens: initialTokens,
+            bondingSupply: 0, // Not using bonding curve
             lockedTokens: lockedTokens
         });
         

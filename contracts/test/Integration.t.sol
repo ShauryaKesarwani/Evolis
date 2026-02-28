@@ -5,12 +5,12 @@ import "forge-std/Test.sol";
 import "../src/TokenFactory.sol";
 import "../src/Token.sol";
 import "../src/LiquidityController.sol";
-import "../src/PLUFactory.sol";
+import "../src/EvolisFactory.sol";
 import "../src/PLUPair.sol";
 
 contract IntegrationTest is Test {
     TokenFactory public factory;
-    PLUFactory public pluFactory;
+    EvolisFactory public evolisFactory;
     
     address public owner;
     address public user1;
@@ -30,7 +30,7 @@ contract IntegrationTest is Test {
         
         // Deploy infrastructure
         factory = new TokenFactory();
-        pluFactory = new PLUFactory();
+        evolisFactory = new EvolisFactory();
     }
     
     function testCompleteTokenLifecycle() public {
@@ -47,7 +47,7 @@ contract IntegrationTest is Test {
             initialLiquidityPercent: 2000, // 20% = 2000 basis points
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 10 ether}(config);
@@ -140,7 +140,7 @@ contract IntegrationTest is Test {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address token1, address controller1) = factory.deployTokenV2{value: 5 ether}(config1);
@@ -159,7 +159,7 @@ contract IntegrationTest is Test {
             initialLiquidityPercent: 3000, // 30%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address token2, address controller2) = factory.deployTokenV2{value: 7 ether}(config2);
@@ -199,7 +199,7 @@ contract IntegrationTest is Test {
             initialLiquidityPercent: 2000, // 20%
             unlockDuration: 30 days,
             epochDuration: 1 days,
-            pluFactory: address(0)
+            evolisFactory: address(0)
         });
         
         (address tokenAddr, address controllerAddr) = factory.deployTokenV2{value: 100 ether}(config);

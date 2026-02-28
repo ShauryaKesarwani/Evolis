@@ -35,15 +35,23 @@ contract PLUPair is ReentrancyGuard {
     uint256 public constant EPOCH_DURATION = 1 days;
     uint256 public constant TOTAL_EPOCHS = 30;
     
+    // Anti-pump-and-dump protection
+    uint256 public constant COOLDOWN_PERIOD = 5 minutes; // Min time between buy and sell
+    uint256 public constant MAX_SELLS_PER_HOUR = 3; // Limit rapid selling
+    mapping(address => uint256) public lastBuyTime;
+    mapping(address => uint256) public lastSellTime;
+    mapping(address => uint256) public sellCountInHour;
+    mapping(address => uint256) public hourStartTime;
+    
     // Fee configuration (basis points, 10000 = 100%)
-    uint256 public constant BASE_FEE = 25; // 0.25% base fee
-    uint256 public constant MAX_FEE = 500; // 5% max fee for whales
-    uint256 public constant MIN_FEE = 10; // 0.1% min fee after maturity
+    uint256 public constant BASE_FEE = 30; // 0.3% base fee (reasonable for all)
+    uint256 public constant MAX_FEE = 230; // 2.3% max fee for whales (base + 2%)
+    uint256 public constant MIN_FEE = 20; // 0.2% min fee after maturity
     
     // Whale thresholds (percentage of reserves)
-    uint256 public constant WHALE_THRESHOLD_1 = 100; // 1% of reserves
-    uint256 public constant WHALE_THRESHOLD_2 = 250; // 2.5% of reserves
-    uint256 public constant WHALE_THRESHOLD_3 = 500; // 5% of reserves
+    uint256 public constant WHALE_THRESHOLD_1 = 200; // 2% of reserves
+    uint256 public constant WHALE_THRESHOLD_2 = 500; // 5% of reserves
+    uint256 public constant WHALE_THRESHOLD_3 = 1000; // 10% of reserves
     
     uint256 private constant MINIMUM_LIQUIDITY = 1000;
     
@@ -61,6 +69,7 @@ contract PLUPair is ReentrancyGuard {
     event Sync(uint112 reserve0, uint112 reserve1);
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed owner, address indexed spender, uint256 value);
+    event PumpAndDumpDetected(address indexed trader, uint256 penaltyBPS, string reason);
     
     constructor(address _token0, address _token1, address _liquidityController) {
         token0 = _token0;
@@ -79,33 +88,33 @@ contract PLUPair is ReentrancyGuard {
         // Step 1: Calculate trade size as percentage of reserves (in basis points)
         uint256 tradePercentage = (amountIn * 10000) / reserveIn;
         
-        // Step 2: Determine base fee multiplier based on trade size
+        // Step 2: Simplified fee structure - more reasonable for all users
         uint256 sizeFee;
         if (tradePercentage <= WHALE_THRESHOLD_1) {
-            // Small trade: <= 1% of reserves → base fee
+            // Normal trade: <= 2% of reserves → 0.3% fee
             sizeFee = BASE_FEE;
         } else if (tradePercentage <= WHALE_THRESHOLD_2) {
-            // Medium trade: 1-2.5% of reserves → 2x base fee
+            // Medium trade: 2-5% of reserves → 0.6% fee (2x base)
             sizeFee = BASE_FEE * 2;
         } else if (tradePercentage <= WHALE_THRESHOLD_3) {
-            // Large trade: 2.5-5% of reserves → 4x base fee
+            // Large trade: 5-10% of reserves → 1.2% fee (4x base)
             sizeFee = BASE_FEE * 4;
         } else {
-            // Whale trade: >5% of reserves → progressive scaling
-            // Linear scaling: 4x base at 5%, up to MAX_FEE at 20%+
+            // Whale trade: >10% of reserves → gradual increase to 2.3% max
+            // Linear scaling from 1.2% to 2.3%
             uint256 excessPercentage = tradePercentage - WHALE_THRESHOLD_3;
-            uint256 additionalFee = (excessPercentage * (MAX_FEE - BASE_FEE * 4)) / 1500; // Scale to max
+            uint256 additionalFee = (excessPercentage * (MAX_FEE - BASE_FEE * 4)) / 1000;
             sizeFee = BASE_FEE * 4 + additionalFee;
             if (sizeFee > MAX_FEE) sizeFee = MAX_FEE;
         }
         
-        // Step 3: Apply epoch-based reduction
+        // Step 3: Apply epoch-based reduction (mature projects get lower fees)
         uint256 currentEpoch = getCurrentEpoch();
         if (currentEpoch >= TOTAL_EPOCHS) {
-            // Fully matured: reduce to minimum fee
-            fee = MIN_FEE + ((sizeFee - MIN_FEE) * 50) / 100; // 50% discount
+            // Fully matured: reduce to minimum fee (0.2%)
+            fee = MIN_FEE + ((sizeFee - MIN_FEE) * 30) / 100; // 70% discount
         } else {
-            // Progressive discount: 0% discount at epoch 0, 40% at epoch 30
+            // Progressive discount: 0% at epoch 0, 40% at epoch 30
             uint256 epochDiscount = (currentEpoch * 40) / TOTAL_EPOCHS;
             fee = sizeFee - ((sizeFee - MIN_FEE) * epochDiscount) / 100;
         }
@@ -125,6 +134,47 @@ contract PLUPair is ReentrancyGuard {
         uint256 elapsed = block.timestamp - deploymentTime;
         uint256 epoch = elapsed / EPOCH_DURATION;
         return epoch > TOTAL_EPOCHS ? TOTAL_EPOCHS : epoch;
+    }
+    
+    /**
+     * @notice Check if address is attempting pump-and-dump
+     * @param trader Address to check
+     * @param isBuy Whether this is a buy (true) or sell (false)
+     * @return allowed Whether trade is allowed
+     * @return penaltyBPS Additional penalty in basis points if suspicious
+     */
+    function checkPumpAndDump(address trader, bool isBuy) internal returns (bool allowed, uint256 penaltyBPS) {
+        // Reset sell counter if hour has passed
+        if (block.timestamp >= hourStartTime[trader] + 1 hours) {
+            sellCountInHour[trader] = 0;
+            hourStartTime[trader] = block.timestamp;
+        }
+        
+        if (isBuy) {
+            // Record buy time
+            lastBuyTime[trader] = block.timestamp;
+            return (true, 0);
+        } else {
+            // This is a sell - check for pump-and-dump pattern
+            
+            // Check 1: Cooldown period - can't sell immediately after buying
+            if (lastBuyTime[trader] > 0 && block.timestamp < lastBuyTime[trader] + COOLDOWN_PERIOD) {
+                // Too quick after buying - apply heavy penalty
+                emit PumpAndDumpDetected(trader, 500, "Quick flip detected");
+                return (true, 500); // +5% penalty for quick flip
+            }
+            
+            // Check 2: Rapid selling detection
+            sellCountInHour[trader]++;
+            if (sellCountInHour[trader] > MAX_SELLS_PER_HOUR) {
+                // Too many sells in short time - apply penalty
+                emit PumpAndDumpDetected(trader, 300, "Rapid selling detected");
+                return (true, 300); // +3% penalty for spam selling
+            }
+            
+            lastSellTime[trader] = block.timestamp;
+            return (true, 0); // Normal sell
+        }
     }
     
     /**
@@ -200,6 +250,15 @@ contract PLUPair is ReentrancyGuard {
         (uint112 _reserve0, uint112 _reserve1,) = getReserves();
         require(amount0Out < _reserve0 && amount1Out < _reserve1, "PLUPair: INSUFFICIENT_LIQUIDITY");
         
+        // Determine if this is a buy or sell (simplified: if getting token0 out, it's a sell of token0)
+        // In reality, one token is the project token and other is BNB/stablecoin
+        // For this example, assume token0 is the project token
+        bool isSellOfToken0 = amount0Out > 0;
+        
+        // Check for pump-and-dump behavior
+        (bool allowed, uint256 pumpDumpPenalty) = checkPumpAndDump(to, !isSellOfToken0);
+        require(allowed, "PLUPair: Trade not allowed");
+        
         // Transfer output tokens
         if (amount0Out > 0) IERC20(token0).transfer(to, amount0Out);
         if (amount1Out > 0) IERC20(token1).transfer(to, amount1Out);
@@ -219,6 +278,10 @@ contract PLUPair is ReentrancyGuard {
         } else {
             feeRate = calculateDynamicFee(amount1In, _reserve1);
         }
+        
+        // Apply pump-and-dump penalty (if any)
+        feeRate = feeRate + pumpDumpPenalty;
+        if (feeRate > 1000) feeRate = 1000; // Cap at 10% total
         
         // Apply dynamic fee to invariant check
         uint256 balance0Adjusted = (balance0 * 10000) - (amount0In * feeRate);
