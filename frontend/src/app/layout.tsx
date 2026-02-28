@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -36,7 +37,9 @@ export default function RootLayout({
         <SmoothScroll>
           <Providers>
             <Navbar />
-            <AnchorScrollHandler />
+            <Suspense fallback={null}>
+              <AnchorScrollHandler />
+            </Suspense>
             <ShrinkingFooter>
                 <main className="relative z-20 min-h-screen bg-black shadow-[0_-20px_60px_rgba(0,0,0,0.8)]">
                   {children}

@@ -149,7 +149,7 @@ export default function DeploymentForm() {
           initialLiquidityPercent: BigInt(parseFloat(formData.initialLiquidityPercent) * 100),
           unlockDuration: unlockDurationSec,
           epochDuration: epochDurationSec,
-          router: PANCAKE_ROUTER,
+          evolisFactory: FACTORY_ADDRESS,
         }],
         value: bnbValue,
       });

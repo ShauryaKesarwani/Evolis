@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAccount, useWriteContract, useSwitchChain } from 'wagmi';
 import { bscTestnet } from 'wagmi/chains';
 import { parseEther } from 'viem';
-import { factoryAbi } from '@/chain/abis';
+import { TOKEN_FACTORY_ABI } from '@/lib/pluAbi';
 import CreateCampaignLayout from '@/components/create-campaign/CreateCampaignLayout';
 import StepIndicator from '@/components/create-campaign/StepIndicator';
 import StepProjectInfo from '@/components/create-campaign/StepProjectInfo';
@@ -106,7 +106,7 @@ export default function CreateCampaignPage() {
       }
 
       const txHash = await writeContractAsync({
-        abi: factoryAbi,
+        abi: TOKEN_FACTORY_ABI,
         address: process.env.NEXT_PUBLIC_FACTORY_ADDRESS as `0x${string}`,
         functionName: 'deployTokenV2',
         chainId: bscTestnet.id,
@@ -117,7 +117,7 @@ export default function CreateCampaignPage() {
           initialLiquidityPercent,
           unlockDuration,
           epochDuration,
-          router: router as `0x${string}`
+          evolisFactory: process.env.NEXT_PUBLIC_FACTORY_ADDRESS as `0x${string}`
         }],
         // Bug Fix: We shouldn't charge the creator their own funding goal!
         // The contract currently expects some msg.value to seed the initial PancakeSwap pool.
